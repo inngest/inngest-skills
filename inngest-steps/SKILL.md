@@ -64,11 +64,13 @@ await step.run("send-notification", async () => {
 ```
 
 **✅ DO:**
+
 - Put ALL non-deterministic logic inside steps
 - Return useful data for subsequent steps
 - Reuse step IDs in loops (counters handled automatically)
 
 **❌ DON'T:**
+
 - Put deterministic logic in steps unnecessarily
 - Forget that each step = separate HTTP request
 
@@ -119,7 +121,7 @@ const approval = await step.waitForEvent("wait-for-approval", {
 
 // Expression-based matching (CEL syntax)
 const subscription = await step.waitForEvent("wait-for-subscription", {
-  event: "app/subscription.created", 
+  event: "app/subscription.created",
   timeout: "30d",
   if: "event.data.userId == async.data.userId && async.data.plan == 'pro'"
 });
@@ -134,31 +136,20 @@ if (!approval) {
 ```
 
 **✅ DO:**
+
 - Use unique IDs for matching (userId, sessionId, requestId)
 - Always set reasonable timeouts
 - Handle null return (timeout case)
 - Use with Realtime for human-in-the-loop flows
 
 **❌ DON'T:**
-- Expect events sent before this step to be caught
+
+- Expect events sent before this step to be handled
 - Use without timeouts in production
 
-### Expression Syntax (CEL)
+### Expression Syntax
 
-In Inngest expressions:
-- `event` = the NEW event being matched (the one you're waiting for or filtering)
-- `async` = the ORIGINAL event that triggered the current function run
-
-```typescript
-// Equality matching
-"event.data.userId == async.data.userId"
-
-// Multiple conditions  
-"event.data.userId == async.data.userId && async.data.amount > 1000"
-
-// Type checking
-"async.data.plan == 'enterprise' || async.data.amount > 5000"
-```
+In expressions, `event` = the **original** triggering event, `async` = the **new** event being matched. See [Expression Syntax Reference](../references/expressions.md) for full syntax, operators, and patterns.
 
 ## step.waitForSignal()
 
@@ -177,6 +168,7 @@ const signal = await step.waitForSignal("wait-for-task-completion", {
 ```
 
 **When to use:**
+
 - **waitForEvent**: Multiple functions might handle the same event
 - **waitForSignal**: Exact 1:1 signal to specific function run
 
@@ -223,6 +215,7 @@ console.log(square.result); // 16, fully typed!
 ```
 
 **Great for:**
+
 - Breaking complex workflows into composable functions
 - Reusing logic across multiple workflows
 - Map-reduce patterns
@@ -236,10 +229,12 @@ Durable LLM calls with full observability.
 const response = await step.ai.infer("analyze-sentiment", {
   model: step.ai.models.openai({ model: "gpt-4o" }),
   body: {
-    messages: [{
-      role: "user", 
-      content: `Analyze sentiment: ${userFeedback}`
-    }]
+    messages: [
+      {
+        role: "user",
+        content: `Analyze sentiment: ${userFeedback}`
+      }
+    ]
   }
 });
 
@@ -254,6 +249,7 @@ const { text } = await step.ai.wrap("generate-summary", generateText, {
 ```
 
 **Benefits:**
+
 - No compute cost during inference (step.ai.infer)
 - Full observability and prompt monitoring
 - Automatic retries on failures
@@ -270,13 +266,13 @@ let cursor = null;
 let hasMore = true;
 
 while (hasMore) {
-  // Same ID "fetch-page" reused - counters handled automatically  
+  // Same ID "fetch-page" reused - counters handled automatically
   const page = await step.run("fetch-page", async () => {
     return shopify.products.list({ cursor, limit: 50 });
   });
-  
+
   allProducts.push(...page.products);
-  
+
   if (page.products.length < 50) {
     hasMore = false;
   } else {
@@ -310,20 +306,20 @@ const createSubscription = step.run("create-subscription", async () => {
 // Run all in parallel
 const [emailId, crmRecord, subscription] = await Promise.all([
   sendEmail,
-  updateCRM, 
+  updateCRM,
   createSubscription
 ]);
 
 // Optimization: Enable optimizeParallelism for many parallel steps
 export default inngest.createFunction(
-  { 
+  {
     id: "parallel-heavy-function",
     optimizeParallelism: true // Reduces HTTP requests by ~50%
   },
   { event: "process/batch" },
   async ({ event, step }) => {
     const results = await Promise.all(
-      event.data.items.map((item, i) => 
+      event.data.items.map((item, i) =>
         step.run(`process-item-${i}`, () => processItem(item))
       )
     );
@@ -343,14 +339,14 @@ export default inngest.createFunction(
   { event: "data/process.large" },
   async ({ event, step }) => {
     const chunks = chunkArray(event.data.items, 10);
-    
+
     // Process chunks in parallel
     const results = await Promise.all(
       chunks.map((chunk, index) =>
         step.run(`process-chunk-${index}`, () => processChunk(chunk))
       )
     );
-    
+
     // Combine results
     await step.run("combine-results", () => {
       return aggregateResults(results);
@@ -362,7 +358,7 @@ export default inngest.createFunction(
 ## Key Gotchas
 
 **🔄 Function Re-execution:** Code outside steps runs on every step execution
-**⏰ Event Timing:** waitForEvent only catches events sent AFTER the step runs  
+**⏰ Event Timing:** waitForEvent only catches events sent AFTER the step runs
 **🔢 Step Limits:** Max 1,000 steps per function, 4MB total step data
 **📨 HTTP Requests:** Each step = separate HTTP request to your app
 **🔁 Step IDs:** Can be reused in loops - Inngest handles counters
@@ -371,7 +367,7 @@ export default inngest.createFunction(
 ## Common Use Cases
 
 - **Human-in-the-loop:** waitForEvent + Realtime UI
-- **Multi-step onboarding:** sleep between steps, waitForEvent for user actions  
+- **Multi-step onboarding:** sleep between steps, waitForEvent for user actions
 - **Data processing:** Parallel steps for chunked work
 - **External integrations:** step.run for reliable API calls
 - **AI workflows:** step.ai for durable LLM orchestration

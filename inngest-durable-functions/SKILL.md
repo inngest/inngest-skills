@@ -76,12 +76,12 @@ const processOrder = inngest.createFunction(
   {
     id: "process-order", // Unique, never change this
     retries: 4, // Default: 4 retries per step
-    concurrency: 10, // Max concurrent executions
+    concurrency: 10 // Max concurrent executions
   },
   { event: "order/created" }, // Trigger
   async ({ event, step }) => {
     // Your durable workflow
-  },
+  }
 );
 ```
 
@@ -136,7 +136,7 @@ await step.run("send-confirmation", () => sendEmail(event.data.email));
 // Combine with events
 [
   { event: "manual/report.requested" },
-  { cron: "0 0 * * 0" }, // Weekly on Sunday
+  { cron: "0 0 * * 0" } // Weekly on Sunday
 ];
 ```
 
@@ -146,7 +146,7 @@ await step.run("send-confirmation", () => sendEmail(event.data.email));
 // Invoke another function as a step
 const result = await step.invoke("generate-report", {
   function: generateReportFunction,
-  data: { userId: event.data.userId },
+  data: { userId: event.data.userId }
 });
 
 // Use returned data
@@ -164,7 +164,7 @@ await step.run("process-report", () => {
 await inngest.send({
   id: `checkout-completed-${cartId}`, // 24-hour deduplication
   name: "cart/checkout.completed",
-  data: { cartId, email: "user@example.com" },
+  data: { cartId, email: "user@example.com" }
 });
 ```
 
@@ -175,12 +175,12 @@ const sendEmail = inngest.createFunction(
   {
     id: "send-checkout-email",
     // Only run once per cartId per 24 hours
-    idempotency: "event.data.cartId",
+    idempotency: "event.data.cartId"
   },
   { event: "cart/checkout.completed" },
   async ({ event, step }) => {
     // This function won't run twice for same cartId
-  },
+  }
 );
 
 // Complex idempotency keys
@@ -188,12 +188,12 @@ const processUserAction = inngest.createFunction(
   {
     id: "process-user-action",
     // Unique per user + organization combination
-    idempotency: 'event.data.userId + "-" + event.data.organizationId',
+    idempotency: 'event.data.userId + "-" + event.data.organizationId'
   },
   { event: "user/action.performed" },
   async ({ event, step }) => {
     /* ... */
-  },
+  }
 );
 ```
 
@@ -201,10 +201,7 @@ const processUserAction = inngest.createFunction(
 
 ### **Event-Based Cancellation**
 
-In Inngest expressions:
-
-- `event` = the NEW event being matched (the one you're waiting for or filtering)
-- `async` = the ORIGINAL event that triggered the current function run
+In expressions, `event` = the **original** triggering event, `async` = the **new** event being matched. See [Expression Syntax Reference](../references/expressions.md) for full details.
 
 ```typescript
 const processOrder = inngest.createFunction(
@@ -213,16 +210,16 @@ const processOrder = inngest.createFunction(
     cancelOn: [
       {
         event: "order/cancelled",
-        if: "event.data.orderId == async.data.orderId",
-      },
-    ],
+        if: "event.data.orderId == async.data.orderId"
+      }
+    ]
   },
   { event: "order/created" },
   async ({ event, step }) => {
     await step.sleepUntil("wait-for-payment", event.data.paymentDue);
     // Will be cancelled if order/cancelled event received
     await step.run("charge-payment", () => processPayment(event.data));
-  },
+  }
 );
 ```
 
@@ -234,13 +231,13 @@ const processWithTimeout = inngest.createFunction(
     id: "process-with-timeout",
     timeouts: {
       start: "5m", // Cancel if not started within 5 minutes
-      run: "30m", // Cancel if running longer than 30 minutes
-    },
+      run: "30m" // Cancel if running longer than 30 minutes
+    }
   },
   { event: "long/process.requested" },
   async ({ event, step }) => {
     /* ... */
-  },
+  }
 );
 ```
 
@@ -257,7 +254,7 @@ const cleanupCancelled = inngest.createFunction(
         return cleanupOrderResources(event.data.run_id);
       });
     }
-  },
+  }
 );
 ```
 
@@ -275,7 +272,7 @@ const cleanupCancelled = inngest.createFunction(
 const reliableFunction = inngest.createFunction(
   {
     id: "reliable-function",
-    retries: 10, // Up to 10 retries per step
+    retries: 10 // Up to 10 retries per step
   },
   { event: "critical/task" },
   async ({ event, step, attempt }) => {
@@ -283,7 +280,7 @@ const reliableFunction = inngest.createFunction(
     if (attempt > 5) {
       // Different logic for later attempts
     }
-  },
+  }
 );
 ```
 
@@ -308,7 +305,7 @@ const processUser = inngest.createFunction(
     });
 
     // Continue processing...
-  },
+  }
 );
 ```
 
@@ -332,7 +329,7 @@ const respectRateLimit = inngest.createFunction(
 
       return response.data;
     });
-  },
+  }
 );
 ```
 
@@ -347,12 +344,12 @@ import winston from "winston";
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
-  transports: [new winston.transports.Console()],
+  transports: [new winston.transports.Console()]
 });
 
 const inngest = new Inngest({
   id: "my-app",
-  logger, // Pass logger to client
+  logger // Pass logger to client
 });
 ```
 
@@ -375,7 +372,7 @@ const processData = inngest.createFunction(
     await step.run("log-completion", async () => {
       logger.info("Processing complete", { resultCount: result.length });
     });
-  },
+  }
 );
 ```
 
@@ -391,8 +388,8 @@ const realTimeFunction = inngest.createFunction(
     checkpointing: {
       maxRuntime: "300s", // Max continuous execution time
       bufferedSteps: 2, // Buffer 2 steps before checkpointing
-      maxInterval: "10s", // Max wait before checkpoint
-    },
+      maxInterval: "10s" // Max wait before checkpoint
+    }
   },
   { event: "realtime/process" },
   async ({ event, step }) => {
@@ -400,7 +397,7 @@ const realTimeFunction = inngest.createFunction(
     const result1 = await step.run("step-1", () => process1(event.data));
     const result2 = await step.run("step-2", () => process2(result1));
     return { result2 };
-  },
+  }
 );
 ```
 
@@ -428,7 +425,7 @@ const conditionalProcess = inngest.createFunction(
     await step.run("standard-processing", () => {
       return processStandardFeatures(userData);
     });
-  },
+  }
 );
 ```
 
@@ -453,7 +450,7 @@ const robustProcess = inngest.createFunction(
     }
 
     return { result: primaryResult };
-  },
+  }
 );
 ```
 

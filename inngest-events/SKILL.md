@@ -14,26 +14,29 @@ Master Inngest event design and delivery patterns. Events are the foundation of 
 Every Inngest event is a JSON object with required and optional properties:
 
 ### Required Properties
+
 ```typescript
 type Event = {
-  name: string;  // Event type (triggers functions)
-  data: object;  // Payload data (any nested JSON)
-}
+  name: string; // Event type (triggers functions)
+  data: object; // Payload data (any nested JSON)
+};
 ```
 
 ### Complete Schema
+
 ```typescript
 type EventPayload = {
-  name: string;               // Required: event type
-  data: Record<string, any>;  // Required: event data
-  id?: string;               // Optional: deduplication ID
-  ts?: number;               // Optional: timestamp (Unix ms)
-  v?: string;                // Optional: schema version
+  name: string; // Required: event type
+  data: Record<string, any>; // Required: event data
+  id?: string; // Optional: deduplication ID
+  ts?: number; // Optional: timestamp (Unix ms)
+  v?: string; // Optional: schema version
   user?: Record<string, any>; // Optional: user context (encrypted)
-}
+};
 ```
 
 ### Basic Event Example
+
 ```typescript
 await inngest.send({
   name: "billing/invoice.paid",
@@ -47,7 +50,7 @@ await inngest.send({
     }
   },
   user: {
-    email: "taylor@example.com"  // Encrypted at rest
+    email: "taylor@example.com" // Encrypted at rest
   }
 });
 ```
@@ -57,25 +60,27 @@ await inngest.send({
 **Use the Object-Action pattern:** `domain/noun.verb`
 
 ### Recommended Patterns
+
 ```typescript
 // ✅ Good: Clear object-action pattern
-"billing/invoice.paid"
-"user/profile.updated"  
-"order/item.shipped"
-"ai/summary.completed"
+"billing/invoice.paid";
+"user/profile.updated";
+"order/item.shipped";
+"ai/summary.completed";
 
 // ✅ Good: Domain prefixes for organization
-"stripe/customer.created"
-"intercom/conversation.assigned"
-"slack/message.posted"
+"stripe/customer.created";
+"intercom/conversation.assigned";
+"slack/message.posted";
 
 // ❌ Avoid: Unclear or inconsistent
-"payment"              // What happened?
-"user_update"          // Use dots, not underscores
-"invoiceWasPaid"       // Too verbose
+"payment"; // What happened?
+"user_update"; // Use dots, not underscores
+"invoiceWasPaid"; // Too verbose
 ```
 
 ### Naming Guidelines
+
 - **Past tense:** Events describe what happened (`created`, `updated`, `failed`)
 - **Dot notation:** Use dots for hierarchy (`billing/invoice.paid`)
 - **Prefixes:** Group related events (`api/user.created`, `webhook/stripe.received`)
@@ -86,6 +91,7 @@ await inngest.send({
 **When to use IDs:** Prevent duplicate processing when events might be sent multiple times.
 
 ### Basic Deduplication
+
 ```typescript
 await inngest.send({
   id: "cart-checkout-completed-ed12c8bde", // Unique per event type
@@ -98,16 +104,17 @@ await inngest.send({
 ```
 
 ### ID Best Practices
+
 ```typescript
 // ✅ Good: Specific to event type and instance
-id: `invoice-paid-${invoiceId}`
-id: `user-signup-${userId}-${timestamp}`
-id: `order-shipped-${orderId}-${trackingNumber}`
+id: `invoice-paid-${invoiceId}`;
+id: `user-signup-${userId}-${timestamp}`;
+id: `order-shipped-${orderId}-${trackingNumber}`;
 
 // ❌ Bad: Generic IDs shared across event types
-id: invoiceId          // Could conflict with other events
-id: "user-action"      // Too generic
-id: customerId         // Same customer, different events
+id: invoiceId; // Could conflict with other events
+id: "user-action"; // Too generic
+id: customerId; // Same customer, different events
 ```
 
 **Deduplication window:** 24 hours from first event reception
@@ -119,12 +126,13 @@ See **inngest-durable-functions** for idempotency configuration.
 **When to use:** Schedule events for future processing or maintain event ordering.
 
 ### Future Scheduling
+
 ```typescript
-const oneHourFromNow = Date.now() + (60 * 60 * 1000);
+const oneHourFromNow = Date.now() + 60 * 60 * 1000;
 
 await inngest.send({
   name: "trial/reminder.send",
-  ts: oneHourFromNow,  // Deliver in 1 hour
+  ts: oneHourFromNow, // Deliver in 1 hour
   data: {
     userId: "user_123",
     trialExpiresAt: "2024-02-15T12:00:00Z"
@@ -133,17 +141,18 @@ await inngest.send({
 ```
 
 ### Maintaining Event Order
+
 ```typescript
 // Events with timestamps are processed in chronological order
 const events = [
   {
-    name: "user/action.performed", 
-    ts: 1640995200000,  // Earlier
+    name: "user/action.performed",
+    ts: 1640995200000, // Earlier
     data: { action: "login" }
   },
   {
     name: "user/action.performed",
-    ts: 1640995260000,  // Later  
+    ts: 1640995260000, // Later
     data: { action: "purchase" }
   }
 ];
@@ -156,6 +165,7 @@ await inngest.send(events);
 **Use case:** One event triggers multiple independent functions for reliability and parallel processing.
 
 ### Basic Fan-Out Implementation
+
 ```typescript
 // Send single event
 await inngest.send({
@@ -195,7 +205,7 @@ const createTrialSubscription = inngest.createFunction(
 );
 
 const addToCrm = inngest.createFunction(
-  { id: "add-to-crm" },  
+  { id: "add-to-crm" },
   { event: "user/signup.completed" },
   async ({ event, step }) => {
     await step.run("crm-sync", async () => {
@@ -209,6 +219,7 @@ const addToCrm = inngest.createFunction(
 ```
 
 ### Fan-Out Benefits
+
 - **Independence:** Functions run separately; one failure doesn't affect others
 - **Parallel execution:** All functions run simultaneously
 - **Selective replay:** Re-run only failed functions
@@ -216,9 +227,7 @@ const addToCrm = inngest.createFunction(
 
 ### Advanced Fan-Out with `waitForEvent`
 
-In Inngest expressions:
-- `event` = the NEW event being matched (the one you're waiting for or filtering)
-- `async` = the ORIGINAL event that triggered the current function run
+In expressions, `event` = the **original** triggering event, `async` = the **new** event being matched. See [Expression Syntax Reference](../references/expressions.md) for full details.
 
 ```typescript
 const orchestrateOnboarding = inngest.createFunction(
@@ -231,7 +240,7 @@ const orchestrateOnboarding = inngest.createFunction(
       { name: "subscription/trial.create", data: event.data },
       { name: "crm/contact.add", data: event.data }
     ]);
-    
+
     // Wait for all to complete
     const [emailResult, subResult, crmResult] = await Promise.all([
       step.waitForEvent("email-sent", {
@@ -240,17 +249,17 @@ const orchestrateOnboarding = inngest.createFunction(
         if: `event.data.userId == async.data.userId`
       }),
       step.waitForEvent("subscription-created", {
-        event: "subscription/trial.created", 
+        event: "subscription/trial.created",
         timeout: "5m",
         if: `event.data.userId == async.data.userId`
       }),
       step.waitForEvent("crm-synced", {
         event: "crm/contact.added",
-        timeout: "5m", 
+        timeout: "5m",
         if: `event.data.userId == async.data.userId`
       })
     ]);
-    
+
     // Complete onboarding
     await step.run("complete-onboarding", async () => {
       return completeUserOnboarding(event.data.userId);
@@ -264,25 +273,27 @@ const orchestrateOnboarding = inngest.createFunction(
 Inngest emits system events for function lifecycle monitoring:
 
 ### Available System Events
+
 ```typescript
 // Function execution events
-"inngest/function.failed"      // Function failed after retries
-"inngest/function.completed"   // Function completed successfully  
-"inngest/function.started"     // Function execution started
+"inngest/function.failed"; // Function failed after retries
+"inngest/function.completed"; // Function completed successfully
+"inngest/function.started"; // Function execution started
 
-// Function configuration events  
-"inngest/function.updated"     // Function configuration changed
-"inngest/function.disabled"    // Function was disabled
+// Function configuration events
+"inngest/function.updated"; // Function configuration changed
+"inngest/function.disabled"; // Function was disabled
 ```
 
 ### Handling Failed Functions
+
 ```typescript
 const handleFailures = inngest.createFunction(
   { id: "handle-failed-functions" },
   { event: "inngest/function.failed" },
   async ({ event, step }) => {
     const { function_id, run_id, error } = event.data;
-    
+
     await step.run("log-failure", async () => {
       logger.error("Function failed", {
         functionId: function_id,
@@ -291,7 +302,7 @@ const handleFailures = inngest.createFunction(
         stack: error.stack
       });
     });
-    
+
     // Alert on critical function failures
     if (function_id.includes("critical")) {
       await step.run("send-alert", async () => {
@@ -302,13 +313,13 @@ const handleFailures = inngest.createFunction(
         });
       });
     }
-    
+
     // Auto-retry certain failures
     if (error.code === "RATE_LIMIT_EXCEEDED") {
       await step.run("schedule-retry", async () => {
         return inngest.send({
-          name: "retry/function.requested", 
-          ts: Date.now() + (5 * 60 * 1000), // Retry in 5 minutes
+          name: "retry/function.requested",
+          ts: Date.now() + 5 * 60 * 1000, // Retry in 5 minutes
           data: { originalRunId: run_id }
         });
       });
@@ -320,23 +331,25 @@ const handleFailures = inngest.createFunction(
 ## Sending Events
 
 ### Client Setup
+
 ```typescript
 // inngest/client.ts
 import { Inngest } from "inngest";
 
-export const inngest = new Inngest({ 
+export const inngest = new Inngest({
   id: "my-app",
   eventKey: process.env.INNGEST_EVENT_KEY // Production only
 });
 ```
 
 ### Single Event
+
 ```typescript
 const result = await inngest.send({
   name: "order/placed",
   data: {
     orderId: "ord_123",
-    customerId: "cus_456", 
+    customerId: "cus_456",
     amount: 2500,
     items: [
       { id: "item_1", quantity: 2 },
@@ -350,11 +363,12 @@ console.log(result.ids); // ["01HQ8PTAESBZPBDS8JTRZZYY3S"]
 ```
 
 ### Batch Events
+
 ```typescript
 const orderItems = await getOrderItems(orderId);
 
 // Convert to events
-const events = orderItems.map(item => ({
+const events = orderItems.map((item) => ({
   name: "inventory/item.reserved",
   data: {
     itemId: item.id,
@@ -369,6 +383,7 @@ await inngest.send(events);
 ```
 
 ### Sending from Functions
+
 ```typescript
 inngest.createFunction(
   { id: "process-order" },
@@ -390,11 +405,12 @@ inngest.createFunction(
 ## Event Design Best Practices
 
 ### Schema Versioning
+
 ```typescript
 // Use version field to track schema changes
 await inngest.send({
   name: "user/profile.updated",
-  v: "2024-01-15.1",  // Schema version
+  v: "2024-01-15.1", // Schema version
   data: {
     userId: "user_123",
     changes: {
@@ -411,29 +427,30 @@ await inngest.send({
 ```
 
 ### Rich Context Data
+
 ```typescript
 // Include enough context for all consumers
 await inngest.send({
-  name: "payment/charge.succeeded", 
+  name: "payment/charge.succeeded",
   data: {
     // Primary identifiers
     chargeId: "ch_123",
     customerId: "cus_456",
-    
+
     // Amount details
     amount: 2500,
     currency: "usd",
-    
+
     // Context for different consumers
     subscription: {
       id: "sub_789",
       plan: "pro_monthly"
     },
     invoice: {
-      id: "inv_012", 
+      id: "inv_012",
       number: "INV-2024-001"
     },
-    
+
     // Metadata for debugging
     paymentMethod: {
       type: "card",
@@ -449,8 +466,9 @@ await inngest.send({
 ```
 
 **Event design principles:**
+
 1. **Self-contained:** Include all data consumers need
-2. **Immutable:** Never modify event schemas after sending  
+2. **Immutable:** Never modify event schemas after sending
 3. **Traceable:** Include correlation IDs and audit trails
 4. **Actionable:** Provide enough context for business logic
 5. **Debuggable:** Include metadata for troubleshooting

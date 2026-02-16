@@ -38,7 +38,7 @@ Create a shared client file that you'll import throughout your codebase:
 import { Inngest } from "inngest";
 
 export const inngest = new Inngest({
-  id: "my-app", // Unique identifier for your application (hyphenated slug)
+  id: "my-app" // Unique identifier for your application (hyphenated slug)
 });
 ```
 
@@ -92,7 +92,7 @@ import { myFunction } from "../../../inngest/functions";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [myFunction],
+  functions: [myFunction]
 });
 ```
 
@@ -104,7 +104,7 @@ import { myFunction } from "../../inngest/functions";
 
 export default serve({
   client: inngest,
-  functions: [myFunction],
+  functions: [myFunction]
 });
 ```
 
@@ -122,8 +122,8 @@ app.use(
   "/api/inngest",
   serve({
     client: inngest,
-    functions: [myFunction],
-  }),
+    functions: [myFunction]
+  })
 );
 ```
 
@@ -151,7 +151,7 @@ import { myFunction } from "./inngest/functions";
   const connection = await connect({
     apps: [{ client: inngest, functions: [myFunction] }],
     instanceId: process.env.HOSTNAME, // Unique worker identifier
-    maxWorkerConcurrency: 10, // Max concurrent steps
+    maxWorkerConcurrency: 10 // Max concurrent steps
   });
 
   console.log("Worker connected:", connection.state);
