@@ -7,9 +7,11 @@ description: Set up Inngest in a TypeScript project. Install the SDK, create a c
 
 This skill sets up Inngest in a TypeScript project from scratch, covering installation, client configuration, connection modes, and local development.
 
+> **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
+
 ## Prerequisites
 
-- Node.js 18+ (Node.js 22.4+ recommended for WebSocket support)
+- Node.js 18+ (Node.js 22.4+ r ecommended for WebSocket support)
 - TypeScript project
 - Package manager (npm, yarn, pnpm, or bun)
 
@@ -57,7 +59,7 @@ Set these environment variables in your `.env` file or deployment environment:
 INNGEST_EVENT_KEY=your-event-key-here
 INNGEST_SIGNING_KEY=your-signing-key-here
 
-# Optional - force dev mode
+# Force dev mode during local development
 INNGEST_DEV=1
 
 # Optional - custom dev server URL (default: http://localhost:8288)
@@ -71,9 +73,11 @@ INNGEST_BASE_URL=http://localhost:8288
 Inngest supports two connection modes:
 
 ### Mode A: Serve Endpoint (HTTP)
+
 Best for serverless platforms (Vercel, Lambda, etc.) and existing APIs.
 
-### Mode B: Connect (WebSocket)  
+### Mode B: Connect (WebSocket)
+
 Best for container runtimes (Kubernetes, Docker) and long-running processes.
 
 ## Step 4A: Serving an Endpoint (HTTP Mode)
@@ -119,15 +123,17 @@ app.use(
   serve({
     client: inngest,
     functions: [myFunction],
-  })
+  }),
 );
 ```
 
 **🔧 Framework-Specific Notes**:
-- **Express**: Must use `express.json()` middleware
+
+- **Express**: Must use `express.json()` middleware. Set the limit option greater than `100kb` to support larger function state.
 - **Fastify**: Use `fastifyPlugin` from `inngest/fastify`
 - **Cloudflare Workers**: Use `inngest/cloudflare`
 - **AWS Lambda**: Use `inngest/lambda`
+- For all other frameworks, check the `serve` reference here: https://www.inngest.com/docs-markdown/learn/serving-inngest-functions
 
 **⚠️ Common Gotcha**: Always use `/api/inngest` as your endpoint path. This enables automatic discovery. If you must use a different path, you'll need to configure discovery manually with the `-u` flag.
 
@@ -157,9 +163,11 @@ import { myFunction } from "./inngest/functions";
 ```
 
 **Requirements for Connect Mode**:
+
 - Node.js 22.4+ (or Deno 1.4+, Bun 1.1+) for WebSocket support
 - Long-running server environment (not serverless)
 - `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY` for production
+- Set the `appVersion` parameter on the `Inngest` client for production to support rolling deploys
 
 ## Step 5: Organizing with Apps
 
@@ -169,7 +177,7 @@ As your system grows, organize functions into logical apps:
 // User service
 const userService = new Inngest({ id: "user-service" });
 
-// Payment service  
+// Payment service
 const paymentService = new Inngest({ id: "payment-service" });
 
 // Email service
@@ -192,7 +200,7 @@ npx --ignore-scripts=false inngest-cli@latest dev
 npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:3000/api/inngest
 
 # Custom port for dev server
-npx --ignore-scripts=false inngest-cli@latest dev -p 8289
+npx --ignore-scripts=false inngest-cli@latest dev -p 9999
 
 # Disable auto-discovery
 npx --ignore-scripts=false inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest
@@ -221,29 +229,31 @@ Create `inngest.json` for complex setups:
 ## Environment-Specific Setup
 
 ### Local Development
+
 ```env
 INNGEST_DEV=1
 # No keys required in dev mode
 ```
 
 ### Production
+
 ```env
 INNGEST_EVENT_KEY=evt_your_production_event_key
 INNGEST_SIGNING_KEY=signkey_your_production_signing_key
-INNGEST_ENV=production
 ```
 
 ### Custom Dev Server Port
+
 ```env
 INNGEST_DEV=1
-INNGEST_BASE_URL=http://localhost:8289
+INNGEST_BASE_URL=http://localhost:9999
 ```
 
 If your app runs on a non-standard port (not 3000), make sure the dev server can reach it by specifying the URL with `-u` flag.
 
 ## Common Issues & Solutions
 
-**Port Conflicts**: If port 8288 is in use, specify a different port: `-p 8289`
+**Port Conflicts**: If port 8288 is in use, specify a different port: `-p 9999`
 
 **Auto-discovery Not Working**: Use manual URL specification: `-u http://localhost:YOUR_PORT/api/inngest`
 

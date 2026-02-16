@@ -7,6 +7,8 @@ description: Configure Inngest flow control for functions. Covers concurrency li
 
 Master Inngest flow control mechanisms to manage resources, prevent overloading systems, and ensure application reliability. This skill covers all flow control options with prescriptive guidance on when and how to use each.
 
+> **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
+
 ## Quick Decision Guide
 
 - **"Limit how many run at once"** → Concurrency

@@ -15,6 +15,12 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 | [inngest-flow-control](./inngest-flow-control/) | Configure Inngest flow control for functions | Concurrency limits, throttling, rate limiting, debounce, priority, batching |
 | [inngest-middleware](./inngest-middleware/) | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware |
 
+## Language Support
+
+**These skills are focused on TypeScript.** Core concepts like events, steps, and flow control apply across all Inngest SDKs, but code examples and setup instructions are TypeScript-specific.
+
+For **Python** or **Go**, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance.
+
 ## Installation
 
 ### Claude Code

@@ -7,6 +7,8 @@ description: Use Inngest step methods to build durable workflows. Covers step.ru
 
 Build robust, durable workflows with Inngest's step methods. Each step is a separate HTTP request that can be independently retried and monitored.
 
+> **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
+
 ## Core Concept
 
 **🔄 Critical: Each step re-runs your function from the beginning.** Put ALL non-deterministic code (API calls, DB queries, randomness) inside steps, never outside.

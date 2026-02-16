@@ -7,6 +7,8 @@ description: Create and use Inngest middleware for cross-cutting concerns. Cover
 
 Master Inngest middleware to handle cross-cutting concerns like logging, error tracking, dependency injection, and data transformation. Middleware runs at key points in the function lifecycle, enabling powerful patterns for observability and shared functionality.
 
+> **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
+
 ## What is Middleware?
 
 Middleware allows code to run at various points in an Inngest client's lifecycle - during function execution, event sending, and more. Think of middleware as hooks into the Inngest execution pipeline.

@@ -7,6 +7,8 @@ description: Design and send Inngest events. Covers event schema and payload for
 
 Master Inngest event design and delivery patterns. Events are the foundation of Inngest - learn to design robust event schemas, implement idempotency, leverage fan-out patterns, and handle system events effectively.
 
+> **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
+
 ## Event Payload Format
 
 Every Inngest event is a JSON object with required and optional properties:
