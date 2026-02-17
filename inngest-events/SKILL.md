@@ -31,7 +31,6 @@ type EventPayload = {
   id?: string; // Optional: deduplication ID
   ts?: number; // Optional: timestamp (Unix ms)
   v?: string; // Optional: schema version
-  user?: Record<string, any>; // Optional: user context (encrypted)
 };
 ```
 
@@ -43,14 +42,12 @@ await inngest.send({
   data: {
     customerId: "cus_NffrFeUfNV2Hib",
     invoiceId: "in_1J5g2n2eZvKYlo2C0Z1Z2Z3Z",
+    userId: "user_03028hf09j2d02",
     amount: 1000,
     metadata: {
       accountId: "acct_1J5g2n2eZvKYlo2C0Z1Z2Z3Z",
       accountName: "Acme.ai"
     }
-  },
-  user: {
-    email: "taylor@example.com" // Encrypted at rest
   }
 });
 ```
@@ -268,6 +265,8 @@ const orchestrateOnboarding = inngest.createFunction(
 );
 ```
 
+See **inngest-steps** for additional patterns including `step.invoke`.
+
 ## System Events
 
 Inngest emits system events for function lifecycle monitoring:
@@ -277,12 +276,8 @@ Inngest emits system events for function lifecycle monitoring:
 ```typescript
 // Function execution events
 "inngest/function.failed"; // Function failed after retries
-"inngest/function.completed"; // Function completed successfully
-"inngest/function.started"; // Function execution started
-
-// Function configuration events
-"inngest/function.updated"; // Function configuration changed
-"inngest/function.disabled"; // Function was disabled
+"inngest/function.finished"; // Function finished - completed or failed
+"inngest/function.cancelled"; // Function cancelled before completion
 ```
 
 ### Handling Failed Functions
@@ -337,9 +332,9 @@ const handleFailures = inngest.createFunction(
 import { Inngest } from "inngest";
 
 export const inngest = new Inngest({
-  id: "my-app",
-  eventKey: process.env.INNGEST_EVENT_KEY // Production only
+  id: "my-app"
 });
+// You must set INNGEST_EVENT_KEY environment variable in production
 ```
 
 ### Single Event

@@ -220,40 +220,6 @@ console.log(square.result); // 16, fully typed!
 - Reusing logic across multiple workflows
 - Map-reduce patterns
 
-## step.ai()
-
-Durable LLM calls with full observability.
-
-```typescript
-// Using step.ai.infer() - offloaded to Inngest infrastructure
-const response = await step.ai.infer("analyze-sentiment", {
-  model: step.ai.models.openai({ model: "gpt-4o" }),
-  body: {
-    messages: [
-      {
-        role: "user",
-        content: `Analyze sentiment: ${userFeedback}`
-      }
-    ]
-  }
-});
-
-// Using step.ai.wrap() - wrap existing SDKs
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-
-const { text } = await step.ai.wrap("generate-summary", generateText, {
-  model: openai("gpt-4-turbo"),
-  prompt: `Summarize this article: ${article.content}`
-});
-```
-
-**Benefits:**
-
-- No compute cost during inference (step.ai.infer)
-- Full observability and prompt monitoring
-- Automatic retries on failures
-
 ## Patterns
 
 ### Loops with Steps
@@ -359,8 +325,8 @@ export default inngest.createFunction(
 
 **🔄 Function Re-execution:** Code outside steps runs on every step execution
 **⏰ Event Timing:** waitForEvent only catches events sent AFTER the step runs
-**🔢 Step Limits:** Max 1,000 steps per function, 4MB total step data
-**📨 HTTP Requests:** Each step = separate HTTP request to your app
+**🔢 Step Limits:** Max 1,000 steps per function, 4MB per step output, 32MB per function run in total
+**📨 HTTP Requests:** With `serve`, use `checkpointing` to reduce HTTP requests
 **🔁 Step IDs:** Can be reused in loops - Inngest handles counters
 **⚡ Parallelism:** Use Promise.all, consider optimizeParallelism for many steps
 
