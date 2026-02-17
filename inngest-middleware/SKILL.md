@@ -1,6 +1,6 @@
 ---
 name: inngest-middleware
-description: Create and use Inngest middleware for cross-cutting concerns. Covers the middleware lifecycle, creating custom middleware, dependency injection with the built-in dependencyInjectionMiddleware, and custom middleware patterns for encryption and error tracking.
+description: Create and use Inngest middleware for cross-cutting concerns. Covers the middleware lifecycle, creating custom middleware, dependency injection with dependencyInjectionMiddleware, encryption via @inngest/middleware-encryption, Sentry error tracking via @inngest/middleware-sentry, and custom middleware patterns.
 ---
 
 # Inngest Middleware
@@ -162,11 +162,50 @@ inngest.createFunction(
 );
 ````
 
-## Built-in Middleware
+## Middleware Packages
 
-Inngest provides `dependencyInjectionMiddleware` as a built-in export (shown above). For encryption or error tracking, **create custom middleware** using the `InngestMiddleware` class. **See [Built-in Middleware Reference](./references/built-in-middleware.md) for complete custom implementations of encryption and Sentry error tracking middleware.**
+Beyond `dependencyInjectionMiddleware` (built-in, shown above), Inngest provides official middleware as **separate packages**. **See [Middleware Reference](./references/built-in-middleware.md) for complete details.**
 
-> **Note:** There are no built-in `encryptionMiddleware` or `sentryMiddleware` exports from the `inngest` package. Use the custom middleware patterns shown in the reference docs.
+### Encryption Middleware
+
+```bash
+npm install @inngest/middleware-encryption
+```
+
+```typescript
+import { encryptionMiddleware } from "@inngest/middleware-encryption";
+
+const inngest = new Inngest({
+  id: "my-app",
+  middleware: [
+    encryptionMiddleware({
+      key: process.env.ENCRYPTION_KEY,
+    })
+  ]
+});
+```
+
+Automatically encrypts all step data, function output, and event `data.encrypted` field. Supports key rotation via `fallbackDecryptionKeys`.
+
+### Sentry Error Tracking
+
+```bash
+npm install @inngest/middleware-sentry
+```
+
+```typescript
+import * as Sentry from "@sentry/node";
+import { sentryMiddleware } from "@inngest/middleware-sentry";
+
+Sentry.init({ /* your Sentry config */ });
+
+const inngest = new Inngest({
+  id: "my-app",
+  middleware: [sentryMiddleware()]
+});
+```
+
+Captures exceptions, adds tracing to each function run, and includes function ID and event names as context. Requires `@sentry/*@>=8.0.0`.
 
 ## Common Middleware Patterns
 

@@ -1,10 +1,50 @@
 # Inngest Middleware Reference
 
-Inngest provides `dependencyInjectionMiddleware` as a built-in export. For encryption and error tracking, create custom middleware using the `InngestMiddleware` class. The patterns below show production-ready implementations.
+Inngest provides `dependencyInjectionMiddleware` as a built-in export from the `inngest` package. Encryption and Sentry middleware are available as **separate packages** that must be installed independently.
 
-> **Note:** There are no `encryptionMiddleware` or `sentryMiddleware` exports from the `inngest` package. Only `dependencyInjectionMiddleware` is a built-in export.
+> **Important:** `encryptionMiddleware` is from `@inngest/middleware-encryption` and `sentryMiddleware` is from `@inngest/middleware-sentry` — they are **not** exported from the core `inngest` package.
 
-## Custom Encryption Middleware
+## Encryption Middleware (`@inngest/middleware-encryption`)
+
+Install the package:
+
+```bash
+npm install @inngest/middleware-encryption
+```
+
+```typescript
+import { Inngest } from "inngest";
+import { encryptionMiddleware } from "@inngest/middleware-encryption";
+
+const inngest = new Inngest({
+  id: "my-app",
+  middleware: [
+    encryptionMiddleware({
+      key: process.env.ENCRYPTION_KEY, // Encryption key from environment
+    })
+  ]
+});
+```
+
+**What gets encrypted by default:**
+- All step data
+- All function output
+- Event data in the `data.encrypted` field (customizable via `eventEncryptionField`)
+
+**Additional options:**
+- `eventEncryptionField`: Customize which event data field to encrypt (default: `data.encrypted`)
+- `decryptOnly`: Disable encryption while maintaining decryption for migration scenarios
+- `fallbackDecryptionKeys`: Array of previous keys for key rotation support
+
+```typescript
+// Key rotation example
+encryptionMiddleware({
+  key: process.env.NEW_ENCRYPTION_KEY,
+  fallbackDecryptionKeys: [process.env.OLD_ENCRYPTION_KEY],
+})
+```
+
+### Custom Encryption Implementation
 
 For more control, create custom encryption middleware:
 
@@ -106,9 +146,40 @@ const inngest = new Inngest({
 });
 ```
 
-## Custom Sentry Error Tracking Middleware
+## Sentry Middleware (`@inngest/middleware-sentry`)
 
-Create custom middleware for Sentry error tracking:
+Install the package:
+
+```bash
+npm install @inngest/middleware-sentry
+```
+
+Requires `@sentry/*@>=8.0.0` and `inngest@>=3.0.0`.
+
+```typescript
+import * as Sentry from "@sentry/node";
+import { Inngest } from "inngest";
+import { sentryMiddleware } from "@inngest/middleware-sentry";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+});
+
+const inngest = new Inngest({
+  id: "my-app",
+  middleware: [sentryMiddleware()]
+});
+```
+
+**What it provides:**
+- Captures exceptions for reporting
+- Adds tracing to each function run
+- Includes context like function ID and event names with each exception and trace
+
+### Custom Sentry Implementation
+
+For more control over error tracking, create custom middleware:
 
 ```typescript
 import { InngestMiddleware } from "inngest";
@@ -325,26 +396,26 @@ const createErrorTrackingMiddleware = (config: {
 Use multiple middleware together:
 
 ```typescript
-import { dependencyInjectionMiddleware } from "inngest";
+import { Inngest, dependencyInjectionMiddleware } from "inngest";
+import { encryptionMiddleware } from "@inngest/middleware-encryption";
+import { sentryMiddleware } from "@inngest/middleware-sentry";
 
 const inngest = new Inngest({
   id: "my-app",
   middleware: [
-    // Order matters - dependencies first (built-in export)
+    // Order matters - dependencies first (built-in export from "inngest")
     dependencyInjectionMiddleware({
       db: new PrismaClient(),
       redis: createRedisClient()
     }),
 
-    // Then custom encryption middleware (see above)
-    createCustomEncryptionMiddleware(process.env.ENCRYPTION_KEY),
+    // Then encryption for data protection (from "@inngest/middleware-encryption")
+    encryptionMiddleware({
+      key: process.env.ENCRYPTION_KEY,
+    }),
 
-    // Finally custom error tracking (see above)
-    createCustomSentryMiddleware({
-      dsn: process.env.SENTRY_DSN,
-      environment: process.env.NODE_ENV,
-      sampleRate: 0.1
-    })
+    // Finally error tracking (from "@inngest/middleware-sentry")
+    sentryMiddleware()
   ]
 });
 ```
