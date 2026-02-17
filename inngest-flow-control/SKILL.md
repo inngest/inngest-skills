@@ -12,7 +12,7 @@ Master Inngest flow control mechanisms to manage resources, prevent overloading 
 ## Quick Decision Guide
 
 - **"Limit how many run at once"** → Concurrency
-- **"Spread runs over time"** → Throttling  
+- **"Spread runs over time"** → Throttling
 - **"Block after N runs in a period"** → Rate Limiting
 - **"Wait for activity to stop, then run once"** → Debounce
 - **"Only one run at a time for this key"** → Singleton
@@ -26,11 +26,12 @@ Master Inngest flow control mechanisms to manage resources, prevent overloading 
 **Key insight:** Concurrency limits active code execution, not function runs. A function waiting on `step.sleep()` or `step.waitForEvent()` doesn't count against the limit.
 
 ### Basic Concurrency
+
 ```typescript
 inngest.createFunction(
   {
     id: "process-images",
-    concurrency: 5,
+    concurrency: 5
   },
   { event: "media/image.uploaded" },
   async ({ event, step }) => {
@@ -41,16 +42,19 @@ inngest.createFunction(
 ```
 
 ### Concurrency with Keys (Multi-tenant)
+
+Use `key` parameter to apply limit per unique value of the key.
+
 ```typescript
 inngest.createFunction(
   {
     id: "user-sync",
     concurrency: [
       {
-        key: "event.data.user_id", 
-        limit: 1,
+        key: "event.data.user_id",
+        limit: 1
       }
-    ],
+    ]
   },
   { event: "user/profile.updated" },
   async ({ event, step }) => {
@@ -61,6 +65,7 @@ inngest.createFunction(
 ```
 
 ### Account-level Shared Limits
+
 ```typescript
 inngest.createFunction(
   {
@@ -69,9 +74,9 @@ inngest.createFunction(
       {
         scope: "account",
         key: `"openai"`,
-        limit: 60,
+        limit: 60
       }
-    ],
+    ]
   },
   { event: "ai/summary.requested" },
   async ({ event, step }) => {
@@ -81,6 +86,7 @@ inngest.createFunction(
 ```
 
 **When to use each:**
+
 - Basic: Protect databases or limit general capacity
 - Keyed: Multi-tenant fairness, prevent "noisy neighbor" issues
 - Account-level: Share quotas across multiple functions (API limits)
@@ -96,11 +102,11 @@ inngest.createFunction(
   {
     id: "sync-crm-data",
     throttle: {
-      limit: 10,        // 10 function starts
-      period: "60s",    // per minute
-      burst: 5,         // plus 5 immediate bursts
-      key: "event.data.customer_id", // per customer
-    },
+      limit: 10, // 10 function starts
+      period: "60s", // per minute
+      burst: 5, // plus 5 immediate bursts
+      key: "event.data.customer_id" // per customer
+    }
   },
   { event: "crm/contact.updated" },
   async ({ event, step }) => {
@@ -111,6 +117,7 @@ inngest.createFunction(
 ```
 
 **Configuration:**
+
 - `limit`: Functions that can start per period
 - `period`: Time window (1s to 7d)
 - `burst`: Extra immediate starts allowed
@@ -129,8 +136,8 @@ inngest.createFunction(
     rateLimit: {
       limit: 1,
       period: "4h",
-      key: "event.data.webhook_id",
-    },
+      key: "event.data.webhook_id"
+    }
   },
   { event: "webhook/data.received" },
   async ({ event, step }) => {
@@ -141,6 +148,7 @@ inngest.createFunction(
 ```
 
 **Use cases:**
+
 - Prevent webhook duplicates
 - Limit expensive operations per user
 - Protection against abuse
@@ -154,10 +162,10 @@ inngest.createFunction(
   {
     id: "save-document",
     debounce: {
-      period: "5m",     // Wait 5min after last edit
+      period: "5m", // Wait 5min after last edit
       key: "event.data.document_id",
-      timeout: "30m",   // Force save after 30min max
-    },
+      timeout: "30m" // Force save after 30min max
+    }
   },
   { event: "document/content.changed" },
   async ({ event, step }) => {
@@ -169,6 +177,7 @@ inngest.createFunction(
 ```
 
 **Perfect for:**
+
 - User input that changes rapidly (search, document editing)
 - Noisy webhook events
 - Ensuring latest data is processed
@@ -183,8 +192,8 @@ inngest.createFunction(
     id: "process-order",
     priority: {
       // VIP users get priority up to 120 seconds ahead
-      run: "event.data.user_tier == 'vip' ? 120 : 0",
-    },
+      run: "event.data.user_tier == 'vip' ? 120 : 0"
+    }
   },
   { event: "order/placed" },
   async ({ event, step }) => {
@@ -194,6 +203,7 @@ inngest.createFunction(
 ```
 
 **Advanced example:**
+
 ```typescript
 inngest.createFunction(
   {
@@ -203,13 +213,13 @@ inngest.createFunction(
         event.data.severity == 'critical' ? 300 :
         event.data.severity == 'high' ? 120 :
         event.data.user_plan == 'enterprise' ? 60 : 0
-      `,
-    },
+      `
+    }
   },
   { event: "support/ticket.created" },
   async ({ event, step }) => {
     // Critical tickets get highest priority (300s ahead)
-    // High severity: 120s ahead  
+    // High severity: 120s ahead
     // Enterprise users: 60s ahead
     // Everyone else: normal priority
   }
@@ -221,14 +231,15 @@ inngest.createFunction(
 **When to use:** Ensure only one instance of a function runs at a time.
 
 ### Skip Mode (Preserve Current Run)
+
 ```typescript
 inngest.createFunction(
   {
     id: "data-backup",
     singleton: {
       key: "event.data.database_id",
-      mode: "skip",
-    },
+      mode: "skip"
+    }
   },
   { event: "backup/requested" },
   async ({ event, step }) => {
@@ -239,14 +250,15 @@ inngest.createFunction(
 ```
 
 ### Cancel Mode (Use Latest Event)
+
 ```typescript
 inngest.createFunction(
   {
     id: "realtime-sync",
     singleton: {
-      key: "event.data.user_id", 
-      mode: "cancel",
-    },
+      key: "event.data.user_id",
+      mode: "cancel"
+    }
   },
   { event: "user/data.changed" },
   async ({ event, step }) => {
@@ -265,21 +277,20 @@ inngest.createFunction(
   {
     id: "bulk-email-send",
     batchEvents: {
-      maxSize: 100,          // Up to 100 events
-      timeout: "30s",        // Or 30 seconds, whichever first
-      key: "event.data.campaign_id", // Batch per campaign
-      if: "event.data.email_type == 'marketing'", // Only marketing emails
-    },
+      maxSize: 100, // Up to 100 events
+      timeout: "30s", // Or 30 seconds, whichever first
+      key: "event.data.campaign_id" // Batch per campaign
+    }
   },
   { event: "email/send.queued" },
   async ({ events, step }) => {
     // Process array of events together
-    const emails = events.map(evt => ({
+    const emails = events.map((evt) => ({
       to: evt.data.email,
       subject: evt.data.subject,
-      body: evt.data.body,
+      body: evt.data.body
     }));
-    
+
     await step.run("send-batch", () => emailService.sendBulk(emails));
   }
 );
@@ -288,6 +299,7 @@ inngest.createFunction(
 ## Combining Flow Control
 
 ### Example: Fair AI Processing
+
 ```typescript
 inngest.createFunction(
   {
@@ -296,19 +308,19 @@ inngest.createFunction(
     throttle: {
       limit: 50,
       period: "60s",
-      key: `"gpu-cluster"`,
+      key: `"gpu-cluster"`
     },
     // Per-user concurrency for fairness
     concurrency: [
       {
         key: "event.data.user_id",
-        limit: 3,
+        limit: 3
       }
     ],
     // VIP users get priority
     priority: {
-      run: "event.data.plan == 'pro' ? 60 : 0",
-    },
+      run: "event.data.plan == 'pro' ? 60 : 0"
+    }
   },
   { event: "ai/image.generate" },
   async ({ event, step }) => {
@@ -317,4 +329,4 @@ inngest.createFunction(
 );
 ```
 
-**Pro tip:** Most production functions benefit from combining 2-3 flow control mechanisms for optimal reliability and performance.
+**Pro tip:** Most production functions benefit from combining 1-3 flow control mechanisms for optimal reliability and performance.
