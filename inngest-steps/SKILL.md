@@ -160,7 +160,8 @@ const taskId = "task-" + crypto.randomUUID();
 
 const signal = await step.waitForSignal("wait-for-task-completion", {
   signal: taskId,
-  timeout: "1h"
+  timeout: "1h",
+  onConflict: "replace" // Required: "replace" overwrites pending signal, "fail" throws an error
 });
 
 // Send signal elsewhere via Inngest API or SDK

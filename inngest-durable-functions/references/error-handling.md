@@ -106,25 +106,17 @@ const smartErrorHandling = inngest.createFunction(
 
       if (!user) {
         // Don't retry - user doesn't exist
-        throw new NonRetriableError("User not found", {
-          userId: event.data.userId
-        });
+        throw new NonRetriableError("User not found");
       }
 
       if (user.status === "deleted") {
         // Don't retry - user is deleted
-        throw new NonRetriableError("User account deleted", {
-          userId: user.id,
-          deletedAt: user.deletedAt
-        });
+        throw new NonRetriableError("User account deleted");
       }
 
       if (!user.hasPermission("process")) {
         // Don't retry - insufficient permissions
-        throw new NonRetriableError("User lacks required permissions", {
-          userId: user.id,
-          requiredPermission: "process"
-        });
+        throw new NonRetriableError("User lacks required permissions");
       }
 
       return user;
@@ -306,8 +298,11 @@ const processWithFailureHandler = inngest.createFunction(
   {
     id: "process-with-failure-handler",
     retries: 3,
-    onFailure: async ({ event, error, runId }) => {
+    onFailure: async ({ event, error }) => {
       // This runs when function fails after all retries
+      // Access run_id from the failure event data
+      const runId = event.data.run_id;
+
       console.error("Function failed:", {
         eventName: event.name,
         runId,
@@ -345,9 +340,8 @@ const processWithFailureHandler = inngest.createFunction(
 const structuredErrorLogging = inngest.createFunction(
   { id: "structured-error-logging" },
   { event: "process/with-logging" },
-  async ({ event, step, logger, runId }) => {
+  async ({ event, step, logger }) => {
     const baseContext = {
-      runId,
       eventName: event.name,
       eventId: event.id,
       userId: event.data.userId

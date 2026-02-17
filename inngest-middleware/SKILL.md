@@ -1,6 +1,6 @@
 ---
 name: inngest-middleware
-description: Create and use Inngest middleware for cross-cutting concerns. Covers the middleware lifecycle, creating custom middleware, dependency injection, and built-in middleware for encryption and error tracking.
+description: Create and use Inngest middleware for cross-cutting concerns. Covers the middleware lifecycle, creating custom middleware, dependency injection with the built-in dependencyInjectionMiddleware, and custom middleware patterns for encryption and error tracking.
 ---
 
 # Inngest Middleware
@@ -68,6 +68,7 @@ const loggingMiddleware = new InngestMiddleware({
 
     return {
       // Function execution lifecycle
+      // Note: `fn` is loosely typed in middleware generics; fn.id works at runtime
       onFunctionRun({ ctx, fn }) {
         return {
           beforeExecution() {
@@ -107,8 +108,8 @@ const loggingMiddleware = new InngestMiddleware({
               events: payloads.map((p) => p.name)
             });
 
-            // Return unmodified payloads
-            return { payloads };
+            // Spread to convert readonly array to mutable array
+            return { payloads: [...payloads] };
           }
         };
       }
@@ -163,39 +164,9 @@ inngest.createFunction(
 
 ## Built-in Middleware
 
-Inngest provides pre-built middleware for common use cases. **See [Built-in Middleware Reference](./references/built-in-middleware.md) for complete implementation details.**
+Inngest provides `dependencyInjectionMiddleware` as a built-in export (shown above). For encryption or error tracking, **create custom middleware** using the `InngestMiddleware` class. **See [Built-in Middleware Reference](./references/built-in-middleware.md) for complete custom implementations of encryption and Sentry error tracking middleware.**
 
-### Encryption Middleware
-
-```typescript
-import { encryptionMiddleware } from "inngest";
-
-const inngest = new Inngest({
-  id: "my-app",
-  middleware: [
-    encryptionMiddleware({
-      key: process.env.ENCRYPTION_KEY
-      // Automatically encrypt/decrypt sensitive data
-    })
-  ]
-});
-```
-
-### Sentry Error Tracking
-
-```typescript
-import { sentryMiddleware } from "inngest";
-
-const inngest = new Inngest({
-  id: "my-app",
-  middleware: [
-    sentryMiddleware({
-      dsn: process.env.SENTRY_DSN
-      // Auto-capture errors and performance data
-    })
-  ]
-});
-```
+> **Note:** There are no built-in `encryptionMiddleware` or `sentryMiddleware` exports from the `inngest` package. Use the custom middleware patterns shown in the reference docs.
 
 ## Common Middleware Patterns
 
