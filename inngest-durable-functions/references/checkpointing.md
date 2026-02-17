@@ -7,6 +7,7 @@ Guide to using Inngest's checkpointing feature for dramatically lower latency in
 Checkpointing executes steps **immediately on your server** rather than waiting for orchestration from Inngest. Steps run eagerly with periodic state checkpoints sent to Inngest for safety.
 
 ### Performance Comparison
+
 - **Without checkpointing**: ~50-100ms per step (HTTP round-trip to Inngest)
 - **With checkpointing**: Near-zero latency between steps, periodic checkpoints
 
@@ -18,10 +19,10 @@ const traditional = inngest.createFunction(
   async ({ event, step }) => {
     // Step 1: HTTP request to Inngest → response → continue
     const data = await step.run("fetch-data", () => fetchData());
-    
-    // Step 2: HTTP request to Inngest → response → continue  
+
+    // Step 2: HTTP request to Inngest → response → continue
     const processed = await step.run("process", () => process(data));
-    
+
     // Step 3: HTTP request to Inngest → response → complete
     return await step.run("save", () => save(processed));
   }
@@ -46,6 +47,7 @@ const checkpointed = inngest.createFunction(
 ## Basic Checkpointing Setup
 
 ### TypeScript Configuration
+
 ```typescript
 import { Inngest } from "inngest";
 
@@ -64,16 +66,19 @@ const realTimeFunction = inngest.createFunction(
   { event: "realtime/process" },
   async ({ event, step }) => {
     // Steps execute immediately with periodic checkpointing
-    const result1 = await step.run("immediate-step-1", () => process1(event.data));
+    const result1 = await step.run("immediate-step-1", () =>
+      process1(event.data)
+    );
     const result2 = await step.run("immediate-step-2", () => process2(result1));
     const result3 = await step.run("immediate-step-3", () => process3(result2));
-    
+
     return { result: result3 };
   }
 );
 ```
 
 ### Go Configuration
+
 ```go
 import (
   "github.com/inngest/inngestgo"
@@ -84,7 +89,7 @@ _, err := inngestgo.CreateFunction(
   client,
   inngestgo.FunctionOpts{
     ID:         "checkpointed-function",
-    Name:       "Checkpointed Function", 
+    Name:       "Checkpointed Function",
     Checkpoint: checkpoint.ConfigSafe, // Enable checkpointing
   },
   inngestgo.EventTrigger("process/checkpointed", nil),
@@ -98,19 +103,20 @@ _, err := inngestgo.CreateFunction(
 ## Advanced Configuration
 
 ### Detailed Checkpointing Options
+
 ```typescript
 const advancedCheckpointing = inngest.createFunction(
   {
     id: "advanced-checkpointing",
     checkpointing: {
       // Maximum time to execute continuously before returning response
-      maxRuntime: '300s', // Default: unlimited (0)
-      
+      maxRuntime: "300s", // Default: unlimited (0)
+
       // Number of steps to buffer before checkpointing
       bufferedSteps: 3, // Default: 1 (no buffering)
-      
+
       // Maximum time to wait before checkpointing buffered steps
-      maxInterval: '10s' // Default: immediate
+      maxInterval: "10s" // Default: immediate
     }
   },
   { event: "process/advanced" },
@@ -120,41 +126,46 @@ const advancedCheckpointing = inngest.createFunction(
     const step2 = await step.run("step-2", () => process2(step1));
     const step3 = await step.run("step-3", () => process3(step2));
     // Checkpoint sent after step 3
-    
+
     const step4 = await step.run("step-4", () => process4(step3));
     const step5 = await step.run("step-5", () => process5(step4));
     const step6 = await step.run("step-6", () => process6(step5));
     // Checkpoint sent after step 6
-    
+
     return { result: step6 };
   }
 );
 ```
 
 ### Platform-Specific Runtime Limits
+
 ```typescript
 // Vercel Functions (5-minute timeout)
 const vercelFunction = inngest.createFunction(
   {
     id: "vercel-optimized",
     checkpointing: {
-      maxRuntime: '4m45s' // Leave 15s buffer for cleanup
+      maxRuntime: "4m45s" // Leave 15s buffer for cleanup
     }
   },
   { event: "process/vercel" },
-  async ({ event, step }) => { /* ... */ }
+  async ({ event, step }) => {
+    /* ... */
+  }
 );
 
-// AWS Lambda (15-minute timeout)  
+// AWS Lambda (15-minute timeout)
 const lambdaFunction = inngest.createFunction(
   {
-    id: "lambda-optimized", 
+    id: "lambda-optimized",
     checkpointing: {
-      maxRuntime: '14m30s' // Leave 30s buffer
+      maxRuntime: "14m30s" // Leave 30s buffer
     }
   },
   { event: "process/lambda" },
-  async ({ event, step }) => { /* ... */ }
+  async ({ event, step }) => {
+    /* ... */
+  }
 );
 
 // Long-running server (unlimited)
@@ -162,27 +173,30 @@ const serverFunction = inngest.createFunction(
   {
     id: "server-optimized",
     checkpointing: {
-      maxRuntime: '0', // Unlimited
+      maxRuntime: "0", // Unlimited
       bufferedSteps: 5, // More aggressive buffering
-      maxInterval: '30s'
+      maxInterval: "30s"
     }
   },
   { event: "process/server" },
-  async ({ event, step }) => { /* ... */ }
+  async ({ event, step }) => {
+    /* ... */
+  }
 );
 ```
 
 ## Checkpointing Patterns for Different Use Cases
 
 ### Real-Time AI/ML Workflows
+
 ```typescript
 const aiWorkflow = inngest.createFunction(
   {
     id: "ai-workflow",
     checkpointing: {
-      maxRuntime: '10m',
+      maxRuntime: "10m",
       bufferedSteps: 2,
-      maxInterval: '5s'
+      maxInterval: "5s"
     }
   },
   { event: "ai/process.requested" },
@@ -218,20 +232,21 @@ const aiWorkflow = inngest.createFunction(
 ```
 
 ### High-Throughput Data Processing
+
 ```typescript
 const dataProcessingPipeline = inngest.createFunction(
   {
     id: "data-processing-pipeline",
     checkpointing: {
-      maxRuntime: '15m',
+      maxRuntime: "15m",
       bufferedSteps: 10, // High buffering for throughput
-      maxInterval: '60s' // Less frequent checkpoints
+      maxInterval: "60s" // Less frequent checkpoints
     }
   },
   { event: "data/batch.received" },
   async ({ event, step }) => {
     const batchId = event.data.batchId;
-    
+
     // Fast processing of many items
     const items = await step.run("fetch-batch-items", () => {
       return fetchBatchItems(batchId);
@@ -240,14 +255,14 @@ const dataProcessingPipeline = inngest.createFunction(
     // Process items in parallel chunks
     const processedChunks = [];
     const chunkSize = 100;
-    
+
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunk = items.slice(i, i + chunkSize);
-      
+
       const processedChunk = await step.run(`process-chunk-${i}`, () => {
-        return Promise.all(chunk.map(item => processItem(item)));
+        return Promise.all(chunk.map((item) => processItem(item)));
       });
-      
+
       processedChunks.push(processedChunk);
     }
 
@@ -259,10 +274,10 @@ const dataProcessingPipeline = inngest.createFunction(
 
     // Bulk save to database
     await step.run("bulk-save-results", () => {
-      return database.bulkInsert('processed_items', allResults);
+      return database.bulkInsert("processed_items", allResults);
     });
 
-    return { 
+    return {
       batchId,
       itemsProcessed: allResults.length,
       processingTime: Date.now() - event.ts
@@ -272,20 +287,21 @@ const dataProcessingPipeline = inngest.createFunction(
 ```
 
 ### Interactive User Workflows
+
 ```typescript
 const interactiveWorkflow = inngest.createFunction(
   {
     id: "interactive-workflow",
     checkpointing: {
-      maxRuntime: '5m',
+      maxRuntime: "5m",
       bufferedSteps: 1, // Immediate checkpoints for user feedback
-      maxInterval: '2s'
+      maxInterval: "2s"
     }
   },
   { event: "user/workflow.started" },
   async ({ event, step }) => {
     const userId = event.data.userId;
-    
+
     // Step 1: Immediate user feedback
     await step.run("send-progress-update", () => {
       return notificationService.send(userId, {
@@ -297,12 +313,12 @@ const interactiveWorkflow = inngest.createFunction(
     // Step 2: Quick validation
     const validationResult = await step.run("validate-request", () => {
       const result = validateUserRequest(event.data);
-      
+
       notificationService.send(userId, {
         message: result.valid ? "Request validated" : "Validation failed",
         progress: 25
       });
-      
+
       return result;
     });
 
@@ -316,14 +332,14 @@ const interactiveWorkflow = inngest.createFunction(
         message: "Processing your request...",
         progress: 50
       });
-      
+
       const result = performMainProcessing(event.data);
-      
+
       notificationService.send(userId, {
         message: "Processing complete",
         progress: 90
       });
-      
+
       return result;
     });
 
@@ -334,7 +350,7 @@ const interactiveWorkflow = inngest.createFunction(
         progress: 100,
         result: processedData
       });
-      
+
       return logWorkflowCompletion(userId, processedData);
     });
 
@@ -343,113 +359,10 @@ const interactiveWorkflow = inngest.createFunction(
 );
 ```
 
-## Error Handling with Checkpointing
-
-### Fallback to Standard Orchestration
-```typescript
-const resilientCheckpointing = inngest.createFunction(
-  {
-    id: "resilient-checkpointing",
-    checkpointing: {
-      maxRuntime: '5m',
-      bufferedSteps: 3
-    }
-  },
-  { event: "process/resilient" },
-  async ({ event, step, logger }) => {
-    try {
-      // These steps run with checkpointing
-      const step1 = await step.run("fast-step-1", () => {
-        return quickOperation1(event.data);
-      });
-
-      const step2 = await step.run("fast-step-2", () => {
-        return quickOperation2(step1);
-      });
-
-      // This step might fail and need retries
-      const step3 = await step.run("potentially-failing-step", () => {
-        if (Math.random() < 0.3) {
-          throw new Error("Random failure for demo");
-        }
-        return riskyOperation(step2);
-      });
-
-      return { result: step3 };
-
-    } catch (error) {
-      logger.info("Checkpointed execution failed, falling back to standard orchestration", {
-        error: error.message,
-        currentStep: error.step
-      });
-
-      // When a step fails in checkpointing mode:
-      // 1. Current checkpoint is saved
-      // 2. Function switches to standard orchestration
-      // 3. Failed step gets normal retry behavior
-      // 4. Remaining steps execute with standard orchestration
-
-      throw error; // Let standard retry logic handle it
-    }
-  }
-);
-```
-
-### Handling Timeouts and Limits
-```typescript
-const timeoutHandling = inngest.createFunction(
-  {
-    id: "timeout-handling",
-    checkpointing: {
-      maxRuntime: '2m', // Short runtime limit
-      bufferedSteps: 2
-    }
-  },
-  { event: "process/timeout-demo" },
-  async ({ event, step, logger }) => {
-    const startTime = Date.now();
-    
-    // Monitor execution time
-    const checkExecutionTime = () => {
-      const elapsed = Date.now() - startTime;
-      if (elapsed > 110000) { // 1m50s - close to maxRuntime
-        logger.warn("Approaching maxRuntime limit", {
-          elapsed,
-          maxRuntime: 120000
-        });
-      }
-    };
-
-    const step1 = await step.run("time-aware-step-1", () => {
-      checkExecutionTime();
-      return performOperation1(event.data);
-    });
-
-    const step2 = await step.run("time-aware-step-2", () => {
-      checkExecutionTime();
-      return performOperation2(step1);
-    });
-
-    // If we're approaching the time limit, this step will be
-    // executed with standard orchestration (next function invocation)
-    const step3 = await step.run("time-aware-step-3", () => {
-      logger.info("Executing final step", {
-        executionTime: Date.now() - startTime
-      });
-      return performOperation3(step2);
-    });
-
-    return { 
-      result: step3,
-      totalExecutionTime: Date.now() - startTime
-    };
-  }
-);
-```
-
 ## Checkpointing Best Practices
 
 ### When to Use Checkpointing
+
 ```typescript
 // ✅ IDEAL for checkpointing: Real-time workflows
 const idealForCheckpointing = inngest.createFunction(
@@ -463,16 +376,16 @@ const idealForCheckpointing = inngest.createFunction(
     const validated = await step.run("validate", () => validate(event.data));
     const processed = await step.run("process", () => process(validated));
     const response = await step.run("respond", () => sendResponse(processed));
-    
+
     return response;
   }
 );
 
-// ❌ NOT ideal for checkpointing: Long-running processes
+// ❌ NOT ideal for checkpointing: Very long-running steps
 const notIdealForCheckpointing = inngest.createFunction(
   {
-    id: "not-ideal-checkpointing",
-    // Don't use checkpointing here
+    id: "not-ideal-checkpointing"
+    // You can opt not to use checkpointing here
   },
   { event: "batch/long.process" },
   async ({ event, step }) => {
@@ -491,215 +404,55 @@ const notIdealForCheckpointing = inngest.createFunction(
 ```
 
 ### Configuration Guidelines
+
 ```typescript
 // High-frequency, low-latency functions
 const highFrequencyConfig = {
   checkpointing: {
-    maxRuntime: '1m',
+    maxRuntime: "1m",
     bufferedSteps: 1, // Immediate checkpoints
-    maxInterval: '1s'
+    maxInterval: "1s"
   }
 };
 
 // Medium complexity workflows
 const mediumComplexityConfig = {
   checkpointing: {
-    maxRuntime: '5m',
+    maxRuntime: "5m",
     bufferedSteps: 3, // Balance performance and safety
-    maxInterval: '10s'
+    maxInterval: "10s"
   }
 };
 
 // High-throughput batch processing
 const highThroughputConfig = {
   checkpointing: {
-    maxRuntime: '10m',
+    maxRuntime: "10m",
     bufferedSteps: 10, // Maximize performance
-    maxInterval: '30s'
+    maxInterval: "30s"
   }
 };
-```
-
-## Monitoring Checkpointed Functions
-
-### Performance Metrics
-```typescript
-const monitoredCheckpointing = inngest.createFunction(
-  {
-    id: "monitored-checkpointing",
-    checkpointing: {
-      maxRuntime: '5m',
-      bufferedSteps: 3,
-      maxInterval: '15s'
-    }
-  },
-  { event: "process/monitored" },
-  async ({ event, step, logger }) => {
-    const metrics = {
-      functionId: "monitored-checkpointing",
-      executionId: event.id,
-      startTime: Date.now(),
-      checkpoints: 0,
-      stepsExecuted: 0
-    };
-
-    logger.info("Starting checkpointed execution", metrics);
-
-    for (let i = 1; i <= 10; i++) {
-      const stepStartTime = Date.now();
-      
-      await step.run(`processing-step-${i}`, async () => {
-        const result = await performProcessingStep(i, event.data);
-        
-        metrics.stepsExecuted = i;
-        const stepDuration = Date.now() - stepStartTime;
-        
-        logger.info("Step completed", {
-          ...metrics,
-          step: i,
-          stepDuration,
-          totalDuration: Date.now() - metrics.startTime
-        });
-
-        // Estimate checkpoint intervals
-        if (i % 3 === 0) { // Based on bufferedSteps: 3
-          metrics.checkpoints++;
-          logger.info("Checkpoint likely sent", {
-            ...metrics,
-            estimatedCheckpoints: metrics.checkpoints
-          });
-        }
-        
-        return result;
-      });
-    }
-
-    const totalDuration = Date.now() - metrics.startTime;
-    
-    logger.info("Checkpointed execution completed", {
-      ...metrics,
-      totalDuration,
-      avgStepDuration: totalDuration / metrics.stepsExecuted,
-      estimatedCheckpoints: metrics.checkpoints
-    });
-
-    // Compare with estimated non-checkpointed duration
-    const estimatedTraditionalDuration = metrics.stepsExecuted * 75; // ~75ms per step
-    const performanceImprovement = ((estimatedTraditionalDuration - totalDuration) / estimatedTraditionalDuration) * 100;
-    
-    logger.info("Performance comparison", {
-      checkpointedDuration: totalDuration,
-      estimatedTraditionalDuration,
-      performanceImprovement: `${performanceImprovement.toFixed(1)}%`
-    });
-
-    return { 
-      metrics,
-      performanceImprovement: performanceImprovement.toFixed(1) + '%'
-    };
-  }
-);
-```
-
-### Debugging Checkpointing Issues
-```typescript
-const debugCheckpointing = inngest.createFunction(
-  {
-    id: "debug-checkpointing",
-    checkpointing: {
-      maxRuntime: '2m',
-      bufferedSteps: 2,
-      maxInterval: '10s'
-    }
-  },
-  { event: "debug/checkpointing" },
-  async ({ event, step, logger }) => {
-    // Enable debug logging
-    const isDebug = event.data.debug || false;
-    
-    if (isDebug) {
-      logger.debug("Checkpointing debug mode enabled", {
-        config: {
-          maxRuntime: '2m',
-          bufferedSteps: 2,
-          maxInterval: '10s'
-        }
-      });
-    }
-
-    try {
-      const step1 = await step.run("debug-step-1", async () => {
-        if (isDebug) logger.debug("Executing step 1 (should be buffered)");
-        return await debugOperation1(event.data);
-      });
-
-      const step2 = await step.run("debug-step-2", async () => {
-        if (isDebug) logger.debug("Executing step 2 (checkpoint after this)");
-        return await debugOperation2(step1);
-      });
-
-      const step3 = await step.run("debug-step-3", async () => {
-        if (isDebug) logger.debug("Executing step 3 (new buffer starts)");
-        return await debugOperation3(step2);
-      });
-
-      return { steps: [step1, step2, step3] };
-
-    } catch (error) {
-      logger.error("Checkpointed function error", {
-        error: error.message,
-        stack: isDebug ? error.stack : undefined,
-        checkpointingMode: "enabled"
-      });
-      
-      throw error;
-    }
-  }
-);
 ```
 
 ## Current Limitations (Beta)
 
 ### Known Limitations
+
 - **Parallel step execution**: Switches to standard orchestration when function branches into parallel steps
 - **No checkpointing resume**: After parallel execution, checkpointing doesn't resume
 - **Middleware compatibility**: Ensure SDK version >=3.51.0 for proper middleware transforms
 
-### Migration Strategy
-```typescript
-// Gradual migration approach
-const hybridFunction = inngest.createFunction(
-  {
-    id: "hybrid-function",
-    // Start with checkpointing disabled
-    checkpointing: process.env.ENABLE_CHECKPOINTING === 'true'
-  },
-  { event: "process/hybrid" },
-  async ({ event, step, logger }) => {
-    const isCheckpointed = process.env.ENABLE_CHECKPOINTING === 'true';
-    
-    logger.info("Function execution mode", {
-      checkpointing: isCheckpointed ? 'enabled' : 'disabled'
-    });
-
-    // Function logic remains the same regardless of checkpointing
-    const result = await processData(event, step);
-    return result;
-  }
-);
-```
-
 ### Feature Support Matrix
 
-| Feature             | Supported |
-| ------------------- | --------- |
-| Local development   | ✅         |
-| Self-hosted Inngest | ✅         |
-| Inngest Cloud       | ✅         |
-| Sequential steps    | ✅         |
+| Feature             | Supported                                 |
+| ------------------- | ----------------------------------------- |
+| Local development   | ✅                                        |
+| Self-hosted Inngest | ✅                                        |
+| Inngest Cloud       | ✅                                        |
+| Sequential steps    | ✅                                        |
 | Parallel steps      | ⚠️ (Falls back to standard orchestration) |
-| Error retries       | ✅         |
-| Step memoization    | ✅         |
-| Cancellation        | ✅         |
+| Error retries       | ✅                                        |
+| Step memoization    | ✅                                        |
+| Cancellation        | ✅                                        |
 
 Checkpointing dramatically improves function latency for real-time workflows while maintaining all the durability and reliability benefits of Inngest's execution model.

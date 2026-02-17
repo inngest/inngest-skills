@@ -5,6 +5,7 @@ Deep dive into how Inngest executes steps, handles memoization, and manages stat
 ## How Step Execution Works
 
 ### Execution Flow
+
 1. **Initial execution**: Function called with event payload
 2. **Step discovery**: First step encountered, code executes
 3. **State persistence**: Result sent to Inngest, stored in state
@@ -13,6 +14,9 @@ Deep dive into how Inngest executes steps, handles memoization, and manages stat
 6. **Memoization**: Previous step result injected, execution continues
 
 ### Each Step = HTTP Request
+
+**Tip**: See [references/checkpointing.md](references/checkpointing.md) to handle multiple steps on a single HTTP request, optimizing performance for low latency.
+
 ```typescript
 const importContacts = inngest.createFunction(
   { id: "import-contacts" },
@@ -41,6 +45,7 @@ const importContacts = inngest.createFunction(
 ## Step ID Management
 
 ### Step ID Hashing
+
 - Inngest **hashes step IDs** as state identifiers
 - **Index position** also included in result
 - Same ID can be reused - Inngest handles counters automatically
@@ -48,14 +53,19 @@ const importContacts = inngest.createFunction(
 ```typescript
 async ({ event, step }) => {
   // These are DIFFERENT executions even with same ID
-  const userData = await step.run("fetch-data", () => fetchUser(event.data.userId));
-  const orderData = await step.run("fetch-data", () => fetchOrders(event.data.userId));
-  
+  const userData = await step.run("fetch-data", () =>
+    fetchUser(event.data.userId)
+  );
+  const orderData = await step.run("fetch-data", () =>
+    fetchOrders(event.data.userId)
+  );
+
   // Inngest internally tracks: fetch-data[0] and fetch-data[1]
-}
+};
 ```
 
 ### Best Practices for Step IDs
+
 ```typescript
 // ✅ GOOD: Descriptive and unique
 await step.run("validate-payment-method", () => validatePayment());
@@ -74,9 +84,12 @@ await step.run("process-data", () => processUserData());
 await step.run("process-user-data", () => processUserData()); // Will re-execute!
 ```
 
+**Note**: Changing IDs will force re-execution, which can be used to evolve the functionality of a function.
+
 ## State Persistence and Recovery
 
 ### State Structure
+
 ```json
 {
   "parse-csv": {
@@ -91,6 +104,7 @@ await step.run("process-user-data", () => processUserData()); // Will re-execute
 ```
 
 ### Recovery from Failures
+
 ```typescript
 const robustProcess = inngest.createFunction(
   { id: "robust-process" },
@@ -106,12 +120,12 @@ const robustProcess = inngest.createFunction(
       // This throws an error on first attempt
       return await heavyProcessing(data);
     });
-    
+
     // On retry:
     // - Step 1 is skipped (memoized result used)
     // - Step 2 is re-executed with same input data
     // - If successful, continues to step 3
-    
+
     await step.run("save-results", async () => {
       return await database.save(processed);
     });
@@ -122,6 +136,7 @@ const robustProcess = inngest.createFunction(
 ## Advanced Step Patterns
 
 ### Parallel Step Execution
+
 ```typescript
 const parallelProcess = inngest.createFunction(
   { id: "parallel-process" },
@@ -144,6 +159,7 @@ const parallelProcess = inngest.createFunction(
 ```
 
 ### Conditional Step Execution
+
 ```typescript
 const conditionalSteps = inngest.createFunction(
   { id: "conditional-steps" },
@@ -154,7 +170,7 @@ const conditionalSteps = inngest.createFunction(
     });
 
     // Conditional steps - only executed when conditions are met
-    if (user.accountType === 'premium') {
+    if (user.accountType === "premium") {
       await step.run("setup-premium-features", () => {
         return setupPremiumFeatures(user.id);
       });
@@ -175,6 +191,7 @@ const conditionalSteps = inngest.createFunction(
 ```
 
 ### Dynamic Step Generation
+
 ```typescript
 const dynamicSteps = inngest.createFunction(
   { id: "dynamic-steps" },
@@ -201,7 +218,8 @@ const dynamicSteps = inngest.createFunction(
 ## Step Timing and Performance
 
 ### Step Overhead
-- Each step adds ~50-100ms overhead (HTTP round-trip)
+
+- Each step adds ~50-100ms overhead (See "checkpointing" reference)
 - Consider **step granularity** vs **retry isolation**
 
 ```typescript
@@ -213,7 +231,7 @@ const tooGranular = inngest.createFunction(
     const a = await step.run("step-1", () => simpleOperation1());
     const b = await step.run("step-2", () => simpleOperation2(a));
     const c = await step.run("step-3", () => simpleOperation3(b));
-    // 3 HTTP requests for simple operations
+    // 3 atomic requests for simple operations
   }
 );
 
@@ -227,7 +245,7 @@ const betterGrouping = inngest.createFunction(
       const b = simpleOperation2(a);
       return simpleOperation3(b);
     });
-    
+
     // Separate step for different failure domain
     const result = await step.run("save-to-database", () => {
       return database.save(processedData);
@@ -237,6 +255,7 @@ const betterGrouping = inngest.createFunction(
 ```
 
 ### When to Use Steps vs Regular Code
+
 ```typescript
 // Use steps for:
 // - API calls (can fail due to network)
@@ -287,10 +306,11 @@ const goodPatterns = inngest.createFunction(
 ### Common Step Problems
 
 1. **Step never completes**
+
 ```typescript
 // ❌ PROBLEM: Infinite loop or hanging operation
 await step.run("broken-step", async () => {
-  while (true) { } // This will timeout the function
+  while (true) {} // This will timeout the function
 });
 
 // ✅ SOLUTION: Add proper exit conditions
@@ -305,7 +325,8 @@ await step.run("fixed-step", async () => {
 });
 ```
 
-2. **Step re-executes unexpectedly**  
+2. **Step re-executes unexpectedly**
+
 ```typescript
 // ❌ PROBLEM: Changed step ID
 // Before:
@@ -318,6 +339,7 @@ await step.run("process-data", () => processUserData()); // Same ID, updated log
 ```
 
 3. **Step data inconsistency**
+
 ```typescript
 // ❌ PROBLEM: Non-deterministic data in step
 await step.run("create-record", () => {
@@ -341,36 +363,8 @@ await step.run("create-record", () => {
 ## Step Performance Monitoring
 
 ### Key Metrics to Track
+
 - **Step execution time**: Individual step performance
-- **Step retry rate**: Which steps fail most often  
+- **Step retry rate**: Which steps fail most often
 - **Function duration**: Total execution time across all steps
 - **Memoization hit rate**: How often steps are skipped
-
-### Logging Step Performance
-```typescript
-const monitoredFunction = inngest.createFunction(
-  { id: "monitored-function" },
-  { event: "process/monitored" },
-  async ({ event, step, logger }) => {
-    const startTime = Date.now();
-    
-    const result = await step.run("heavy-processing", async () => {
-      const stepStart = Date.now();
-      const data = await heavyProcessing(event.data);
-      
-      logger.info("Step completed", {
-        step: "heavy-processing",
-        duration: Date.now() - stepStart,
-        dataSize: data.length
-      });
-      
-      return data;
-    });
-
-    logger.info("Function completed", {
-      totalDuration: Date.now() - startTime,
-      resultSize: result.length
-    });
-  }
-);
-```

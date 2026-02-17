@@ -286,6 +286,8 @@ const reliableFunction = inngest.createFunction(
 
 ### **Non-Retriable Errors**
 
+Prevent retries for code that won't succeed upon retry.
+
 ```typescript
 import { NonRetriableError } from "inngest";
 
@@ -378,7 +380,7 @@ const processData = inngest.createFunction(
 
 ## Performance Optimization
 
-### **Checkpointing (Beta)**
+### **Checkpointing**
 
 ```typescript
 // Enable checkpointing for lower latency

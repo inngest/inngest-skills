@@ -5,6 +5,7 @@ Comprehensive guide to handling errors, configuring retries, and building resili
 ## Understanding Inngest Error Types
 
 ### Errors vs Failures
+
 - **Error**: Causes a step to retry (transient issues)
 - **Failed Step**: Step that exhausted all retry attempts
 - **Failed Function**: Function marked as "Failed" when unhandled step failure occurs
@@ -21,7 +22,7 @@ const errorHandlingExample = inngest.createFunction(
         if (!data) throw new Error("API returned empty data");
         return data;
       });
-      
+
       // If step fails after 3 retries, catch the failure here
     } catch (error) {
       // Handle failed step - this runs after all retries exhausted
@@ -36,6 +37,7 @@ const errorHandlingExample = inngest.createFunction(
 ## Retry Configuration
 
 ### Function-Level Retry Settings
+
 ```typescript
 const customRetries = inngest.createFunction(
   {
@@ -45,7 +47,7 @@ const customRetries = inngest.createFunction(
   { event: "critical/task" },
   async ({ event, step, attempt }) => {
     // attempt is 0-indexed: 0, 1, 2, ..., 10
-    
+
     const result = await step.run("critical-operation", async () => {
       if (attempt < 5) {
         // Use different strategy for early attempts
@@ -60,6 +62,7 @@ const customRetries = inngest.createFunction(
 ```
 
 ### Per-Step Independent Retries
+
 ```typescript
 const independentRetries = inngest.createFunction(
   { id: "independent-retries", retries: 4 },
@@ -79,7 +82,7 @@ const independentRetries = inngest.createFunction(
     await step.run("save-results", async () => {
       return await database.save(processedData);
     });
-    
+
     // If any step fails all retries, it becomes a "failed step"
     // Other steps are unaffected
   }
@@ -89,6 +92,7 @@ const independentRetries = inngest.createFunction(
 ## Non-Retriable Errors
 
 ### When to Use NonRetriableError
+
 ```typescript
 import { NonRetriableError } from "inngest";
 
@@ -99,30 +103,30 @@ const smartErrorHandling = inngest.createFunction(
     const user = await step.run("validate-and-fetch-user", async () => {
       // Check if user exists
       const user = await database.users.findById(event.data.userId);
-      
+
       if (!user) {
         // Don't retry - user doesn't exist
         throw new NonRetriableError("User not found", {
           userId: event.data.userId
         });
       }
-      
-      if (user.status === 'deleted') {
+
+      if (user.status === "deleted") {
         // Don't retry - user is deleted
         throw new NonRetriableError("User account deleted", {
           userId: user.id,
           deletedAt: user.deletedAt
         });
       }
-      
-      if (!user.hasPermission('process')) {
+
+      if (!user.hasPermission("process")) {
         // Don't retry - insufficient permissions
         throw new NonRetriableError("User lacks required permissions", {
           userId: user.id,
-          requiredPermission: 'process'
+          requiredPermission: "process"
         });
       }
-      
+
       return user;
     });
 
@@ -135,6 +139,7 @@ const smartErrorHandling = inngest.createFunction(
 ```
 
 ### Common NonRetriableError Scenarios
+
 ```typescript
 const commonNonRetriableErrors = inngest.createFunction(
   { id: "non-retriable-examples" },
@@ -178,6 +183,7 @@ const commonNonRetriableErrors = inngest.createFunction(
 ## Custom Retry Timing
 
 ### RetryAfterError for Rate Limits
+
 ```typescript
 import { RetryAfterError } from "inngest";
 
@@ -189,27 +195,23 @@ const respectRateLimit = inngest.createFunction(
       try {
         const response = await externalAPI.makeRequest(event.data.payload);
         return response.data;
-        
       } catch (error) {
         if (error.response?.status === 429) {
           // Respect the API's rate limit
-          const retryAfter = error.response.headers['retry-after'];
+          const retryAfter = error.response.headers["retry-after"];
           const retryAfterMs = parseInt(retryAfter) * 1000;
-          
+
           throw new RetryAfterError(
-            "API rate limit exceeded", 
+            "API rate limit exceeded",
             new Date(Date.now() + retryAfterMs)
           );
         }
-        
+
         if (error.response?.status === 503) {
           // Service unavailable - retry after 30 seconds
-          throw new RetryAfterError(
-            "Service temporarily unavailable",
-            "30s"
-          );
+          throw new RetryAfterError("Service temporarily unavailable", "30s");
         }
-        
+
         throw error; // Regular retry for other errors
       }
     });
@@ -218,6 +220,7 @@ const respectRateLimit = inngest.createFunction(
 ```
 
 ### Dynamic Retry Strategies
+
 ```typescript
 const dynamicRetryStrategy = inngest.createFunction(
   { id: "dynamic-retry" },
@@ -229,26 +232,25 @@ const dynamicRetryStrategy = inngest.createFunction(
         if (attempt < 2) {
           // Fast path for first few attempts
           return await fastService.process(event.data);
-        } else if (attempt < 5) {
+        } else if (attempt < 4) {
           // Reliable but slower service
           return await reliableService.process(event.data);
         } else {
-          // Last resort - manual processing queue
-          return await manualQueue.enqueue(event.data);
+          // Last resort - manual processing tracking
+          return await db.manualProcessing.insert(event.data);
         }
-        
       } catch (error) {
         // Dynamic retry timing based on error type
-        if (error.code === 'RATE_LIMITED') {
+        if (error.code === "RATE_LIMITED") {
           const delay = Math.min(Math.pow(2, attempt) * 1000, 60000); // Max 1 minute
           throw new RetryAfterError("Rate limited", `${delay}ms`);
         }
-        
-        if (error.code === 'SERVER_OVERLOADED') {
-          const delay = 5000 + (attempt * 2000); // Increasing delay
+
+        if (error.code === "SERVER_OVERLOADED") {
+          const delay = 5000 + attempt * 2000; // Increasing delay
           throw new RetryAfterError("Server overloaded", `${delay}ms`);
         }
-        
+
         throw error; // Use default retry timing
       }
     });
@@ -259,110 +261,38 @@ const dynamicRetryStrategy = inngest.createFunction(
 ## Error Recovery Patterns
 
 ### Fallback Services Pattern
+
 ```typescript
 const fallbackPattern = inngest.createFunction(
   { id: "fallback-services" },
   { event: "process/with-fallback" },
   async ({ event, step }) => {
     let result;
-    let service = 'primary';
-    
+    let service = "primary";
+
     try {
       // Try primary service
       result = await step.run("try-primary-service", async () => {
         return await primaryService.process(event.data);
       });
     } catch (primaryError) {
-      try {
-        // Fallback to secondary service
-        service = 'secondary';
-        result = await step.run("try-secondary-service", async () => {
-          return await secondaryService.process(event.data);
-        });
-      } catch (secondaryError) {
-        // Final fallback - queue for manual processing
-        service = 'manual';
-        result = await step.run("queue-manual-processing", async () => {
-          return await manualQueue.enqueue({
-            data: event.data,
-            primaryError: primaryError.message,
-            secondaryError: secondaryError.message
-          });
-        });
-      }
+      // Fallback to secondary service
+      service = "secondary";
+      result = await step.run("try-secondary-service", async () => {
+        return await secondaryService.process(event.data);
+      });
     }
-    
+
     // Log which service was used
     await step.run("log-service-usage", async () => {
-      return await analytics.track('service-usage', {
+      return await analytics.track("service-usage", {
         eventId: event.id,
         serviceUsed: service,
         success: true
       });
     });
-    
-    return { result, serviceUsed: service };
-  }
-);
-```
 
-### Circuit Breaker Pattern
-```typescript
-const circuitBreakerPattern = inngest.createFunction(
-  { id: "circuit-breaker" },
-  { event: "process/circuit-breaker" },
-  async ({ event, step }) => {
-    // Check circuit breaker state
-    const circuitState = await step.run("check-circuit-breaker", async () => {
-      const failures = await redis.get('service:failures:count');
-      const lastFailure = await redis.get('service:failures:last');
-      
-      const failureCount = parseInt(failures || '0');
-      const timeSinceLastFailure = Date.now() - parseInt(lastFailure || '0');
-      
-      // Circuit is open (too many failures recently)
-      if (failureCount >= 5 && timeSinceLastFailure < 300000) { // 5 minutes
-        return { state: 'open', failureCount, timeSinceLastFailure };
-      }
-      
-      // Circuit is half-open (trying to recover)
-      if (failureCount >= 5 && timeSinceLastFailure >= 300000) {
-        return { state: 'half-open', failureCount, timeSinceLastFailure };
-      }
-      
-      return { state: 'closed', failureCount };
-    });
-    
-    if (circuitState.state === 'open') {
-      // Circuit is open - use fallback immediately
-      return await step.run("use-fallback-service", async () => {
-        return await fallbackService.process(event.data);
-      });
-    }
-    
-    // Try primary service
-    try {
-      const result = await step.run("try-primary-service", async () => {
-        const response = await primaryService.process(event.data);
-        
-        // Success - reset failure count
-        await redis.del('service:failures:count');
-        await redis.del('service:failures:last');
-        
-        return response;
-      });
-      
-      return result;
-      
-    } catch (error) {
-      // Increment failure count
-      await step.run("record-failure", async () => {
-        await redis.incr('service:failures:count');
-        await redis.set('service:failures:last', Date.now());
-      });
-      
-      throw error; // Let normal retry logic handle it
-    }
+    return { result, serviceUsed: service };
   }
 );
 ```
@@ -370,6 +300,7 @@ const circuitBreakerPattern = inngest.createFunction(
 ## Failure Handlers
 
 ### Function-Level Failure Handling
+
 ```typescript
 const processWithFailureHandler = inngest.createFunction(
   {
@@ -377,28 +308,20 @@ const processWithFailureHandler = inngest.createFunction(
     retries: 3,
     onFailure: async ({ event, error, runId }) => {
       // This runs when function fails after all retries
-      console.error('Function failed:', {
+      console.error("Function failed:", {
         eventName: event.name,
         runId,
         error: error.message,
         eventData: event.data
       });
-      
+
       // Send alert
       await notificationService.sendAlert({
-        type: 'function-failure',
-        functionId: 'process-with-failure-handler',
+        type: "function-failure",
+        functionId: "process-with-failure-handler",
         runId,
         error: error.message,
         eventData: event.data
-      });
-      
-      // Add to dead letter queue for manual investigation
-      await deadLetterQueue.add({
-        originalEvent: event,
-        error: error.message,
-        runId,
-        timestamp: Date.now()
       });
     }
   },
@@ -408,72 +331,8 @@ const processWithFailureHandler = inngest.createFunction(
     const result = await step.run("risky-operation", async () => {
       return await riskyExternalService.process(event.data);
     });
-    
-    return result;
-  }
-);
-```
 
-### Step-Level Error Context
-```typescript
-const contextualErrorHandling = inngest.createFunction(
-  { id: "contextual-errors" },
-  { event: "process/contextual" },
-  async ({ event, step, logger }) => {
-    const context = {
-      userId: event.data.userId,
-      requestId: event.id,
-      startTime: Date.now()
-    };
-    
-    try {
-      const userData = await step.run("fetch-user-data", async () => {
-        try {
-          return await userService.getUser(context.userId);
-        } catch (error) {
-          logger.error('Failed to fetch user data', {
-            ...context,
-            error: error.message,
-            stack: error.stack
-          });
-          throw error;
-        }
-      });
-      
-      const processedData = await step.run("process-user-data", async () => {
-        try {
-          return await dataProcessor.process(userData, event.data.options);
-        } catch (error) {
-          logger.error('Failed to process user data', {
-            ...context,
-            userData: { id: userData.id, type: userData.type },
-            options: event.data.options,
-            error: error.message
-          });
-          throw error;
-        }
-      });
-      
-    } catch (stepError) {
-      // Handle step failure with context
-      await step.run("handle-processing-failure", async () => {
-        const errorReport = {
-          ...context,
-          step: stepError.step || 'unknown',
-          error: stepError.message,
-          processingTime: Date.now() - context.startTime
-        };
-        
-        // Different handling based on user type
-        if (userData?.type === 'premium') {
-          await priorityErrorQueue.add(errorReport);
-        } else {
-          await standardErrorQueue.add(errorReport);
-        }
-        
-        return errorReport;
-      });
-    }
+    return result;
   }
 );
 ```
@@ -481,6 +340,7 @@ const contextualErrorHandling = inngest.createFunction(
 ## Error Monitoring and Alerting
 
 ### Structured Error Logging
+
 ```typescript
 const structuredErrorLogging = inngest.createFunction(
   { id: "structured-error-logging" },
@@ -490,34 +350,32 @@ const structuredErrorLogging = inngest.createFunction(
       runId,
       eventName: event.name,
       eventId: event.id,
-      userId: event.data.userId,
-      timestamp: new Date().toISOString()
+      userId: event.data.userId
     };
-    
+
     try {
       const result = await step.run("api-call-with-logging", async () => {
         try {
-          logger.info('Starting API call', {
+          logger.info("Starting API call", {
             ...baseContext,
-            step: 'api-call-with-logging',
+            step: "api-call-with-logging",
             endpoint: event.data.endpoint
           });
-          
+
           const response = await externalAPI.call(event.data);
-          
-          logger.info('API call succeeded', {
+
+          logger.info("API call succeeded", {
             ...baseContext,
-            step: 'api-call-with-logging',
+            step: "api-call-with-logging",
             responseStatus: response.status,
             responseSize: JSON.stringify(response.data).length
           });
-          
+
           return response.data;
-          
         } catch (error) {
           const errorContext = {
             ...baseContext,
-            step: 'api-call-with-logging',
+            step: "api-call-with-logging",
             error: {
               message: error.message,
               code: error.code,
@@ -526,24 +384,23 @@ const structuredErrorLogging = inngest.createFunction(
             },
             retryAttempt: step.attempt || 0
           };
-          
-          logger.error('API call failed', errorContext);
-          
+
+          logger.error("API call failed", errorContext);
+
           // Add to error tracking service
           await errorTracker.captureException(error, errorContext);
-          
+
           throw error;
         }
       });
-      
     } catch (stepFailure) {
       // Final error handling after all retries
-      logger.error('Step failed after all retries', {
+      logger.error("Step failed after all retries", {
         ...baseContext,
         finalError: stepFailure.message,
         totalAttempts: (stepFailure.attempt || 0) + 1
       });
-      
+
       throw stepFailure;
     }
   }
@@ -553,6 +410,7 @@ const structuredErrorLogging = inngest.createFunction(
 ## Best Practices Summary
 
 ### Error Handling Checklist
+
 - ✅ **Use NonRetriableError** for permanent failures (auth, validation, not found)
 - ✅ **Configure appropriate retry counts** based on failure impact
 - ✅ **Implement fallback strategies** for critical operations
@@ -562,6 +420,7 @@ const structuredErrorLogging = inngest.createFunction(
 - ✅ **Respect external service rate limits** with RetryAfterError
 
 ### Common Anti-Patterns
+
 - ❌ **Retrying permanent errors** (NonRetriableError exists for a reason)
 - ❌ **Not logging error context** (makes debugging impossible)
 - ❌ **Ignoring failure handlers** (missed opportunity for cleanup)
@@ -570,6 +429,7 @@ const structuredErrorLogging = inngest.createFunction(
 - ❌ **Overly aggressive retries** (can overwhelm downstream services)
 
 ### Error Handling Strategy Framework
+
 1. **Identify error types**: Permanent vs transient
 2. **Configure retries**: Based on error impact and recovery time
 3. **Implement fallbacks**: For critical business operations
