@@ -14,8 +14,9 @@ Master Inngest middleware to handle cross-cutting concerns like logging, error t
 Middleware allows code to run at various points in an Inngest client's lifecycle - during function execution, event sending, and more. Think of middleware as hooks into the Inngest execution pipeline.
 
 **When to use middleware:**
+
 - **Observability:** Add logging, tracing, or metrics
-- **Dependency injection:** Share client instances across functions  
+- **Dependency injection:** Share client instances across functions
 - **Data transformation:** Encrypt/decrypt, validate, or enrich data
 - **Error handling:** Custom error tracking and alerting
 - **Authentication:** Validate user context or permissions
@@ -25,25 +26,28 @@ Middleware allows code to run at various points in an Inngest client's lifecycle
 Middleware can be registered at **client-level** (affects all functions) or **function-level** (affects specific functions).
 
 ### Execution Order
+
 ```typescript
 const inngest = new Inngest({
   id: "my-app",
   middleware: [
-    loggingMiddleware,    // Runs 1st
-    errorMiddleware,      // Runs 2nd  
-  ],
+    loggingMiddleware, // Runs 1st
+    errorMiddleware // Runs 2nd
+  ]
 });
 
 inngest.createFunction(
   {
     id: "example",
     middleware: [
-      authMiddleware,     // Runs 3rd
-      metricsMiddleware,  // Runs 4th
-    ],
+      authMiddleware, // Runs 3rd
+      metricsMiddleware // Runs 4th
+    ]
   },
   { event: "test" },
-  async () => { /* function code */ }
+  async () => {
+    /* function code */
+  }
 );
 ```
 
@@ -61,7 +65,7 @@ const loggingMiddleware = new InngestMiddleware({
   init() {
     // Setup phase - runs when client initializes
     const logger = setupLogger();
-    
+
     return {
       // Function execution lifecycle
       onFunctionRun({ ctx, fn }) {
@@ -73,50 +77,51 @@ const loggingMiddleware = new InngestMiddleware({
               runId: ctx.runId
             });
           },
-          
+
           afterExecution() {
             logger.info("Function completed", {
-              functionId: fn.id, 
+              functionId: fn.id,
               runId: ctx.runId
             });
           },
-          
+
           transformOutput({ result }) {
             // Log function output
             logger.debug("Function output", {
               functionId: fn.id,
               output: result.data
             });
-            
+
             // Return unmodified result
             return { result };
           }
         };
       },
-      
-      // Event sending lifecycle  
+
+      // Event sending lifecycle
       onSendEvent() {
         return {
           transformInput({ payloads }) {
             logger.info("Sending events", {
               count: payloads.length,
-              events: payloads.map(p => p.name)
+              events: payloads.map((p) => p.name)
             });
-            
+
             // Return unmodified payloads
             return { payloads };
           }
         };
       }
     };
-  },
+  }
 });
 ```
 
 ### Python Implementation
 
 Python middleware follows a similar pattern. See [Dependency Injection Reference](./references/dependency-injection.md) for complete Python examples.
-```
+
+````
 
 ## Dependency Injection
 
@@ -130,7 +135,7 @@ import { dependencyInjectionMiddleware } from "inngest";
 const inngest = new Inngest({
   id: 'my-app',
   middleware: [
-    dependencyInjectionMiddleware({ 
+    dependencyInjectionMiddleware({
       openai: new OpenAI(),
       db: new PrismaClient(),
     }),
@@ -147,20 +152,21 @@ inngest.createFunction(
       messages: [{ role: "user", content: event.data.content }],
       model: "gpt-4",
     });
-    
+
     await db.document.update({
       where: { id: event.data.documentId },
       data: { summary: summary.choices[0].message.content }
     });
   }
 );
-```
+````
 
 ## Built-in Middleware
 
 Inngest provides pre-built middleware for common use cases. **See [Built-in Middleware Reference](./references/built-in-middleware.md) for complete implementation details.**
 
 ### Encryption Middleware
+
 ```typescript
 import { encryptionMiddleware } from "inngest";
 
@@ -168,25 +174,26 @@ const inngest = new Inngest({
   id: "my-app",
   middleware: [
     encryptionMiddleware({
-      key: process.env.ENCRYPTION_KEY,
+      key: process.env.ENCRYPTION_KEY
       // Automatically encrypt/decrypt sensitive data
     })
-  ],
+  ]
 });
 ```
 
 ### Sentry Error Tracking
+
 ```typescript
 import { sentryMiddleware } from "inngest";
 
 const inngest = new Inngest({
-  id: "my-app", 
+  id: "my-app",
   middleware: [
     sentryMiddleware({
-      dsn: process.env.SENTRY_DSN,
+      dsn: process.env.SENTRY_DSN
       // Auto-capture errors and performance data
     })
-  ],
+  ]
 });
 ```
 
@@ -201,37 +208,37 @@ const metricsMiddleware = new InngestMiddleware({
     return {
       onFunctionRun({ ctx, fn }) {
         let startTime: number;
-        
+
         return {
           beforeExecution() {
             startTime = Date.now();
-            metrics.increment('inngest.function.started', {
+            metrics.increment("inngest.step.started", {
               function: fn.id,
               event: ctx.event.name
             });
           },
-          
+
           afterExecution() {
             const duration = Date.now() - startTime;
-            metrics.histogram('inngest.function.duration', duration, {
+            metrics.histogram("inngest.step.duration", duration, {
               function: fn.id,
               event: ctx.event.name
             });
           },
-          
+
           transformOutput({ result }) {
-            const status = result.error ? 'error' : 'success';
-            metrics.increment('inngest.function.completed', {
+            const status = result.error ? "error" : "success";
+            metrics.increment("inngest.step.completed", {
               function: fn.id,
               status: status
             });
-            
+
             return { result };
           }
         };
-      },
+      }
     };
-  },
+  }
 });
 ```
 
@@ -248,6 +255,7 @@ Create reusable middleware with configuration options for different environments
 ## Best Practices
 
 ### Design Principles
+
 1. **Keep middleware focused:** One concern per middleware
 2. **Handle errors gracefully:** Don't let middleware crash functions
 3. **Consider performance:** Middleware runs on every execution
@@ -255,14 +263,16 @@ Create reusable middleware with configuration options for different environments
 5. **Test thoroughly:** Middleware affects all functions that use it
 
 ### Common Use Cases to Implement
+
 - **Retry logic** for transient failures
-- **Circuit breakers** for external service calls  
+- **Circuit breakers** for external service calls
 - **Request/response logging** for debugging
 - **User context enrichment** from external sources
 - **Feature flags** for gradual rollouts
 - **Custom authentication** and authorization checks
 
 ### Error Handling in Middleware
+
 ```typescript
 const robustMiddleware = new InngestMiddleware({
   name: "Robust Middleware",
@@ -277,21 +287,23 @@ const robustMiddleware = new InngestMiddleware({
             } catch (middlewareError) {
               // Log error but don't break the function
               console.error("Middleware error:", middlewareError);
-              
+
               // Return original result on middleware failure
               return { result };
             }
           }
         };
-      },
+      }
     };
-  },
+  }
 });
 ```
 
 ### Testing Middleware
+
 Use Inngest's testing utilities (`createMockContext`, `createMockFunction`) to unit test middleware behavior.
 
 **For complete implementation examples and advanced patterns, see:**
+
 - [Dependency Injection Reference](./references/dependency-injection.md)
 - [Built-in Middleware Reference](./references/built-in-middleware.md)

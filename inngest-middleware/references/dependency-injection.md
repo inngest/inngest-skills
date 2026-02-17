@@ -8,24 +8,24 @@ Inngest provides built-in dependency injection middleware that automatically inj
 
 ```typescript
 import { dependencyInjectionMiddleware } from "inngest";
-import OpenAI from 'openai';
-import { PrismaClient } from '@prisma/client';
-import { createClient } from 'redis';
+import OpenAI from "openai";
+import { PrismaClient } from "@prisma/client";
+import { createClient } from "redis";
 
 const inngest = new Inngest({
-  id: 'my-app',
+  id: "my-app",
   middleware: [
-    dependencyInjectionMiddleware({ 
+    dependencyInjectionMiddleware({
       openai: new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: process.env.OPENAI_API_KEY
       }),
       db: new PrismaClient(),
       redis: createClient({
         host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT,
-      }),
-    }),
-  ],
+        port: process.env.REDIS_PORT
+      })
+    })
+  ]
 });
 
 // Functions automatically get injected dependencies
@@ -36,18 +36,18 @@ inngest.createFunction(
     // All dependencies available in function context
     const summary = await openai.chat.completions.create({
       messages: [{ role: "user", content: event.data.content }],
-      model: "gpt-4",
+      model: "gpt-4"
     });
-    
+
     await db.document.update({
       where: { id: event.data.documentId },
       data: { summary: summary.choices[0].message.content }
     });
-    
+
     // Cache the result
     await redis.setex(
-      `summary:${event.data.documentId}`, 
-      3600, 
+      `summary:${event.data.documentId}`,
+      3600,
       summary.choices[0].message.content
     );
   }
@@ -60,7 +60,7 @@ For more control over dependency injection, create custom middleware:
 
 ```typescript
 import { InngestMiddleware } from "inngest";
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
 const createDependencyMiddleware = (deps: Record<string, any>) => {
   return new InngestMiddleware({
@@ -71,13 +71,13 @@ const createDependencyMiddleware = (deps: Record<string, any>) => {
           return {
             transformInput() {
               return {
-                ctx: deps, // Inject dependencies into context
+                ctx: deps // Inject dependencies into context
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
+    }
   });
 };
 
@@ -87,17 +87,17 @@ const inngest = new Inngest({
   middleware: [
     createDependencyMiddleware({
       stripe: new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2023-10-16',
+        apiVersion: "2023-10-16"
       }),
       analytics: createAnalyticsClient({
-        apiKey: process.env.ANALYTICS_API_KEY,
+        apiKey: process.env.ANALYTICS_API_KEY
       }),
       notifications: createNotificationService({
         apiKey: process.env.NOTIFICATION_API_KEY,
-        from: process.env.FROM_EMAIL,
-      }),
+        from: process.env.FROM_EMAIL
+      })
     })
-  ],
+  ]
 });
 
 // Function with injected dependencies
@@ -108,21 +108,21 @@ inngest.createFunction(
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: event.data.amount,
-      currency: 'usd',
-      customer: event.data.customerId,
+      currency: "usd",
+      customer: event.data.customerId
     });
-    
+
     // Track analytics
-    await analytics.track('payment_processed', {
+    await analytics.track("payment_processed", {
       userId: event.data.userId,
-      amount: event.data.amount,
+      amount: event.data.amount
     });
-    
+
     // Send confirmation
     await notifications.send({
       to: event.data.userEmail,
-      template: 'payment_confirmation',
-      data: { amount: event.data.amount },
+      template: "payment_confirmation",
+      data: { amount: event.data.amount }
     });
   }
 );
@@ -149,7 +149,7 @@ class DependencyMiddleware(inngest.Middleware):
         self.openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         self.db_engine = create_engine(os.environ["DATABASE_URL"])
         self.redis = Redis.from_url(os.environ["REDIS_URL"])
-        
+
     def transform_input(
         self,
         ctx: inngest.Context,
@@ -177,21 +177,21 @@ async def analyze_data(ctx: inngest.Context, step: inngest.StepTools):
         messages=[{"role": "user", "content": ctx.event.data.text}],
         model="gpt-4",
     )
-    
+
     # Store result in database
     with ctx.db.begin() as conn:
         conn.execute(
             "INSERT INTO analyses (id, content, result) VALUES (%s, %s, %s)",
             (ctx.run_id, ctx.event.data.text, analysis.choices[0].message.content)
         )
-    
-    # Cache result  
+
+    # Cache result
     ctx.redis.setex(
-        f"analysis:{ctx.run_id}", 
-        3600, 
+        f"analysis:{ctx.run_id}",
+        3600,
         analysis.choices[0].message.content
     )
-    
+
     return {"analysis": analysis.choices[0].message.content}
 ```
 
@@ -205,7 +205,7 @@ Only initialize expensive clients when needed:
 const createLazyDependencyMiddleware = () => {
   let openai: OpenAI | undefined;
   let stripe: Stripe | undefined;
-  
+
   return new InngestMiddleware({
     name: "Lazy Dependency Injection",
     init() {
@@ -218,28 +218,28 @@ const createLazyDependencyMiddleware = () => {
                   // Lazy getters
                   get openai() {
                     if (!openai) {
-                      openai = new OpenAI({ 
-                        apiKey: process.env.OPENAI_API_KEY 
+                      openai = new OpenAI({
+                        apiKey: process.env.OPENAI_API_KEY
                       });
                     }
                     return openai;
                   },
-                  
+
                   get stripe() {
                     if (!stripe) {
                       stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-                        apiVersion: '2023-10-16',
+                        apiVersion: "2023-10-16"
                       });
                     }
                     return stripe;
-                  },
-                },
+                  }
+                }
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
+    }
   });
 };
 ```
@@ -262,19 +262,19 @@ const createScopedDependencyMiddleware = () => {
                 ctx: {
                   logger: createLogger({
                     runId: ctx.runId,
-                    functionId: ctx.function.id,
+                    functionId: ctx.function.id
                   }),
                   tracer: createTracer({
                     traceId: ctx.runId,
-                    service: ctx.function.id,
-                  }),
-                },
+                    service: ctx.function.id
+                  })
+                }
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
+    }
   });
 };
 ```
@@ -290,26 +290,30 @@ const createConditionalDependencyMiddleware = () => {
     init() {
       const prodDatabase = createDatabaseClient(process.env.DATABASE_URL);
       const testDatabase = createTestDatabaseClient();
-      
+
       return {
         onFunctionRun({ ctx }) {
           return {
             transformInput() {
-              const isTest = ctx.event.name.includes('/test');
-              const isProduction = process.env.NODE_ENV === 'production';
-              
+              const isTest = ctx.event.name.includes("/test");
+              const isProduction = process.env.NODE_ENV === "production";
+
               return {
                 ctx: {
                   db: isTest ? testDatabase : prodDatabase,
-                  analytics: isProduction ? createAnalyticsClient() : createMockAnalytics(),
-                  cache: isProduction ? createRedisClient() : createMemoryCache(),
-                },
+                  analytics: isProduction
+                    ? createAnalyticsClient()
+                    : createMockAnalytics(),
+                  cache: isProduction
+                    ? createRedisClient()
+                    : createMemoryCache()
+                }
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
+    }
   });
 };
 ```
@@ -317,17 +321,19 @@ const createConditionalDependencyMiddleware = () => {
 ## Best Practices
 
 ### Resource Management
+
 - **Pool connections**: Use connection pools for databases
-- **Reuse instances**: Don't create new clients on every function call  
+- **Reuse instances**: Don't create new clients on every function call
 - **Handle cleanup**: Properly close connections in middleware teardown
 
 ### Error Handling
+
 ```typescript
 const robustDependencyMiddleware = new InngestMiddleware({
   name: "Robust Dependencies",
   init() {
     let db: any;
-    
+
     const getDatabase = () => {
       if (!db) {
         try {
@@ -340,7 +346,7 @@ const robustDependencyMiddleware = new InngestMiddleware({
       }
       return db;
     };
-    
+
     return {
       onFunctionRun() {
         return {
@@ -349,18 +355,19 @@ const robustDependencyMiddleware = new InngestMiddleware({
               ctx: {
                 get db() {
                   return getDatabase();
-                },
-              },
+                }
+              }
             };
-          },
+          }
         };
-      },
+      }
     };
-  },
+  }
 });
 ```
 
 ### Testing with Dependencies
+
 ```typescript
 // Create test-friendly middleware
 const createTestableMiddleware = (overrides: Record<string, any> = {}) => {
@@ -374,15 +381,15 @@ const createTestableMiddleware = (overrides: Record<string, any> = {}) => {
               return {
                 ctx: {
                   db: overrides.db || createDatabaseClient(),
-                  openai: overrides.openai || new OpenAI(),
+                  openai: overrides.openai || new OpenAI()
                   // Add more dependencies as needed
-                },
+                }
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
+    }
   });
 };
 
@@ -392,6 +399,6 @@ const mockOpenAI = createMockOpenAI();
 
 const testMiddleware = createTestableMiddleware({
   db: mockDb,
-  openai: mockOpenAI,
+  openai: mockOpenAI
 });
 ```
