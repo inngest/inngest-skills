@@ -315,7 +315,7 @@ const processUser = inngest.createFunction(
 ### **Custom Retry Timing**
 
 ```typescript
-import { Inngest, RetryAfterError } from "inngest";
+import { RetryAfterError } from "inngest";
 
 const respectRateLimit = inngest.createFunction(
   { id: "api-call" },
