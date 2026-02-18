@@ -48,7 +48,41 @@ export const inngest = new Inngest({
 - **`eventKey`**: Event key for sending events (prefer `INNGEST_EVENT_KEY` env var)
 - **`env`**: Environment name for Branch Environments
 - **`isDev`**: Force Dev mode (`true`) or Cloud mode (`false`)
-- **`schemas`**: Event payload types for TypeScript typing
+- **`logger`**: Custom logger instance (e.g. winston, pino) — enables `logger` in function context
+- **`middleware`**: Array of middleware (see **inngest-middleware** skill)
+- **`schemas`**: Use `EventSchemas` for typed events (see **inngest-events** skill)
+
+### Typed Events with EventSchemas
+
+```typescript
+import { Inngest, EventSchemas } from "inngest";
+
+type Events = {
+  "user/signup.completed": {
+    data: {
+      userId: string;
+      email: string;
+      plan: "free" | "pro";
+    };
+  };
+  "order/placed": {
+    data: {
+      orderId: string;
+      amount: number;
+    };
+  };
+};
+
+export const inngest = new Inngest({
+  id: "my-app",
+  schemas: new EventSchemas().fromRecord<Events>()
+});
+
+// Now event data is fully typed in functions:
+// inngest.createFunction({ id: "handle-signup" }, { event: "user/signup.completed" },
+//   async ({ event }) => { event.data.userId /* typed as string */ }
+// );
+```
 
 ### Environment Variables Setup
 
@@ -116,7 +150,7 @@ import { inngest } from "./inngest/client";
 import { myFunction } from "./inngest/functions";
 
 const app = express();
-app.use(express.json()); // Required for Inngest
+app.use(express.json({ limit: "10mb" })); // Required for Inngest, increase limit for larger function state
 
 app.use(
   "/api/inngest",
@@ -129,7 +163,7 @@ app.use(
 
 **🔧 Framework-Specific Notes**:
 
-- **Express**: Must use `express.json()` middleware. Set the limit option greater than `100kb` to support larger function state.
+- **Express**: Must use `express.json({ limit: "10mb" })` middleware to support larger function state.
 - **Fastify**: Use `fastifyPlugin` from `inngest/fastify`
 - **Cloudflare Workers**: Use `inngest/cloudflare`
 - **AWS Lambda**: Use `inngest/lambda`
@@ -143,6 +177,7 @@ For long-running applications that maintain persistent connections:
 
 ```typescript
 // src/worker.ts
+// Note: inngest/connect requires inngest SDK v3.27+
 import { connect } from "inngest/connect";
 import { inngest } from "./inngest/client";
 import { myFunction } from "./inngest/functions";

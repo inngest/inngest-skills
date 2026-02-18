@@ -279,6 +279,8 @@ inngest.createFunction(
     batchEvents: {
       maxSize: 100, // Up to 100 events
       timeout: "30s", // Or 30 seconds, whichever first
+      // `key` groups events into separate batches per unique value
+      // This is different from expressions `if` which filters events
       key: "event.data.campaign_id" // Batch per campaign
     }
   },

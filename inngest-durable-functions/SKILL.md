@@ -231,7 +231,7 @@ const processWithTimeout = inngest.createFunction(
     id: "process-with-timeout",
     timeouts: {
       start: "5m", // Cancel if not started within 5 minutes
-      run: "30m" // Cancel if running longer than 30 minutes
+      finish: "30m" // Cancel if not finished within 30 minutes
     }
   },
   { event: "long/process.requested" },
@@ -276,9 +276,10 @@ const reliableFunction = inngest.createFunction(
   },
   { event: "critical/task" },
   async ({ event, step, attempt }) => {
-    // Access attempt number (0-indexed)
+    // `attempt` is the function-level attempt counter (0-indexed)
+    // It tracks retries for the currently executing step, not the overall function
     if (attempt > 5) {
-      // Different logic for later attempts
+      // Different logic for later attempts of the current step
     }
   }
 );
@@ -388,7 +389,7 @@ const realTimeFunction = inngest.createFunction(
   {
     id: "real-time-function",
     checkpointing: {
-      maxRuntime: "300s", // Max continuous execution time
+      maxRuntime: "5m", // Max continuous execution time
       bufferedSteps: 2, // Buffer 2 steps before checkpointing
       maxInterval: "10s" // Max wait before checkpoint
     }
