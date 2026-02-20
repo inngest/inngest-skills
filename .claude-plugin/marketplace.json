@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "typescript-skills",
+      "name": "inngest-skills",
       "description": "Agent skills for building with Inngest's durable execution platform. Covers SDK setup, events, durable functions, steps, flow control, and middleware.",
       "category": "development",
       "source": "./",
