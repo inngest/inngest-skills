@@ -6,8 +6,8 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 
 ## Available Skills
 
-| Skill                                                     | Description                                                  | What It Covers                                                                 |
-| --------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Skill                                                            | Description                                                  | What It Covers                                                                 |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | [inngest-setup](./skills/inngest-setup/)                         | Set up Inngest in a TypeScript project                       | SDK installation, client config, environment variables, dev server             |
 | [inngest-events](./skills/inngest-events/)                       | Design and send Inngest events                               | Event schema, naming conventions, idempotency, fan-out patterns, system events |
 | [inngest-durable-functions](./skills/inngest-durable-functions/) | Create and configure Inngest durable functions               | Triggers, step execution, memoization, cancellation, error handling, retries   |
@@ -26,7 +26,8 @@ For **Python** or **Go**, refer to the [Inngest documentation](https://www.innge
 ### Claude Code
 
 ```bash
-/plugin marketplace add inngest-skills
+/plugin marketplace add inngest/inngest-skills
+/plugin install inngest-skills@inngest-agent-skills
 ```
 
 or manually:
