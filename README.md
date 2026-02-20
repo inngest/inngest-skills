@@ -30,12 +30,6 @@ For **Python** or **Go**, refer to the [Inngest documentation](https://www.innge
 /plugin install inngest-skills@inngest-agent-skills
 ```
 
-or manually:
-
-```bash
-/plugin add https://github.com/inngest/inngest-skills
-```
-
 ### Skills.sh
 
 ```bash
