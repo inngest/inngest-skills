@@ -1,15 +1,29 @@
 {
   "_": "See reference: https://code.claude.com/docs/en/plugin-marketplaces#marketplace-schema",
-  "name": "inngest-skills",
-  "description": "Inngest Agent Skills for building with Inngest's durable execution platform",
-  "owner": { "name": "Inngest, Inc.", "email": "hello@inngest.com" },
+  "name": "inngest-agent-skills",
+  "metadata": {
+    "description": "Inngest Agent Skills for building with Inngest's durable execution platform"
+  },
+  "owner": {
+    "name": "Inngest, Inc.",
+    "email": "hello@inngest.com"
+  },
   "plugins": [
     {
-      "name": "typescript",
+      "name": "typescript-skills",
       "description": "Agent skills for building with Inngest's durable execution platform. Covers SDK setup, events, durable functions, steps, flow control, and middleware.",
       "category": "development",
-      "source": "../",
-      "homepage": "https://github.com/inngest/inngest-skills"
+      "source": "./",
+      "skills": [
+        "./skills/inngest-setup",
+        "./skills/inngest-durable-functions",
+        "./skills/inngest-steps",
+        "./skills/inngest-events",
+        "./skills/inngest-flow-control",
+        "./skills/inngest-middleware"
+      ],
+      "repository": "https://github.com/inngest/inngest-skills",
+      "homepage": "https://www.inngest.com/docs/ai-dev-tools/agent-skills"
     }
   ]
 }

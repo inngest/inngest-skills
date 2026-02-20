@@ -8,13 +8,15 @@ Each skill is a directory with a `SKILL.md` file containing the complete skill d
 
 ```
 inngest-skills/
-├── inngest-setup/           # SDK installation & project setup
-├── inngest-events/          # Event design patterns
-├── inngest-durable-functions/ # Function configuration
-├── inngest-steps/           # Workflow building with steps
-├── inngest-flow-control/    # Concurrency & rate limiting
-└── inngest-middleware/      # Cross-cutting concerns
-    └── references/          # Detailed reference material
+└── skills/
+    ├── inngest-setup/           # SDK installation & project setup
+    ├── inngest-events/          # Event design patterns
+    ├── inngest-durable-functions/ # Function configuration
+    ├── inngest-steps/           # Workflow building with steps
+    ├── inngest-flow-control/    # Concurrency & rate limiting
+    ├── inngest-middleware/      # Cross-cutting concerns
+    │   └── references/          # Detailed reference material
+    └── references/              # Shared reference material
 ```
 
 ## Agent Skills Specification

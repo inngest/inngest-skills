@@ -8,12 +8,12 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 
 | Skill                                                     | Description                                                  | What It Covers                                                                 |
 | --------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| [inngest-setup](./inngest-setup/)                         | Set up Inngest in a TypeScript project                       | SDK installation, client config, environment variables, dev server             |
-| [inngest-events](./inngest-events/)                       | Design and send Inngest events                               | Event schema, naming conventions, idempotency, fan-out patterns, system events |
-| [inngest-durable-functions](./inngest-durable-functions/) | Create and configure Inngest durable functions               | Triggers, step execution, memoization, cancellation, error handling, retries   |
-| [inngest-steps](./inngest-steps/)                         | Use Inngest step methods to build durable workflows          | step.run, step.sleep, step.waitForEvent, loops, parallel execution             |
-| [inngest-flow-control](./inngest-flow-control/)           | Configure Inngest flow control for functions                 | Concurrency limits, throttling, rate limiting, debounce, priority, batching    |
-| [inngest-middleware](./inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
+| [inngest-setup](./skills/inngest-setup/)                         | Set up Inngest in a TypeScript project                       | SDK installation, client config, environment variables, dev server             |
+| [inngest-events](./skills/inngest-events/)                       | Design and send Inngest events                               | Event schema, naming conventions, idempotency, fan-out patterns, system events |
+| [inngest-durable-functions](./skills/inngest-durable-functions/) | Create and configure Inngest durable functions               | Triggers, step execution, memoization, cancellation, error handling, retries   |
+| [inngest-steps](./skills/inngest-steps/)                         | Use Inngest step methods to build durable workflows          | step.run, step.sleep, step.waitForEvent, loops, parallel execution             |
+| [inngest-flow-control](./skills/inngest-flow-control/)           | Configure Inngest flow control for functions                 | Concurrency limits, throttling, rate limiting, debounce, priority, batching    |
+| [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
 
 ## Language Support
 
