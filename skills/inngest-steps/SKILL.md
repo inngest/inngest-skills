@@ -216,12 +216,12 @@ import { referenceFunction } from "inngest";
 
 const externalFn = referenceFunction({
   appId: "other-app",
-  functionId: "other-fn",
+  functionId: "other-fn"
 });
 
 const result = await step.invoke("call-external", {
   function: externalFn,
-  data: { key: "value" },
+  data: { key: "value" }
 });
 ```
 
@@ -266,7 +266,7 @@ await step.run("process-products", () => {
 
 ### Parallel Execution
 
-Use Promise.all for parallel steps. **In v4, parallel step execution is optimized by default** — Inngest batches parallel steps to reduce HTTP requests.
+Use Promise.all for parallel steps. **In v4, parallel step execution is optimized by default**
 
 ```typescript
 // Create steps without awaiting
@@ -309,7 +309,7 @@ export default inngest.createFunction(
 const winner = await group.parallel(async () => {
   return Promise.race([
     step.run("fast-service", () => callFastService()),
-    step.run("slow-service", () => callSlowService()),
+    step.run("slow-service", () => callSlowService())
   ]);
 });
 

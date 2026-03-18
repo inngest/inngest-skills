@@ -38,9 +38,9 @@ Create a shared client file that you'll import throughout your codebase:
 import { Inngest } from "inngest";
 
 export const inngest = new Inngest({
-  id: "my-app", // Unique identifier for your application (hyphenated slug)
+  id: "my-app" // Unique identifier for your application (hyphenated slug)
 });
-// In development, set INNGEST_DEV=1 env var or use isDev: true
+// In development, you must set the INNGEST_DEV=1 env var or use isDev: true
 // In production, INNGEST_SIGNING_KEY is required (v4 defaults to Cloud mode)
 ```
 
@@ -66,15 +66,15 @@ const signupCompleted = eventType("user/signup.completed", {
   schema: z.object({
     userId: z.string(),
     email: z.string(),
-    plan: z.enum(["free", "pro"]),
-  }),
+    plan: z.enum(["free", "pro"])
+  })
 });
 
 const orderPlaced = eventType("order/placed", {
   schema: z.object({
     orderId: z.string(),
-    amount: z.number(),
-  }),
+    amount: z.number()
+  })
 });
 
 export const inngest = new Inngest({ id: "my-app" });
@@ -82,15 +82,19 @@ export const inngest = new Inngest({ id: "my-app" });
 // Use event types as triggers for full type safety:
 inngest.createFunction(
   { id: "handle-signup", triggers: [signupCompleted] },
-  async ({ event }) => { event.data.userId /* typed as string */ }
+  async ({ event }) => {
+    event.data.userId; /* typed as string */
+  }
 );
 
 // Use event types when sending events:
-await inngest.send(signupCompleted.create({
-  userId: "user_123",
-  email: "user@example.com",
-  plan: "pro",
-}));
+await inngest.send(
+  signupCompleted.create({
+    userId: "user_123",
+    email: "user@example.com",
+    plan: "pro"
+  })
+);
 ```
 
 ### Environment Variables Setup

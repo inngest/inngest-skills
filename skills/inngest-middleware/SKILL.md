@@ -9,7 +9,7 @@ Master Inngest middleware to handle cross-cutting concerns like logging, error t
 
 > **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
 
-> **Note:** The middleware system was significantly rewritten in v4. The lifecycle hooks documented here reflect the v4 API. If migrating from v3, consult the [migration guide](https://www.inngest.com/docs/reference/typescript/v4/migrations/v3-to-v4) for details on breaking changes.
+> **Note:** The middleware system was significantly rewritten in v4. The lifecycle hooks documented here reflect the v4 API. If migrating from v3, consult the [migration guide](https://www.inngest.com/docs-markdown/reference/typescript/v4/migrations/v3-to-v4) for details on breaking changes.
 
 ## What is Middleware?
 
@@ -180,7 +180,7 @@ const inngest = new Inngest({
   id: "my-app",
   middleware: [
     encryptionMiddleware({
-      key: process.env.ENCRYPTION_KEY,
+      key: process.env.ENCRYPTION_KEY
     })
   ]
 });
@@ -198,7 +198,9 @@ npm install @inngest/middleware-sentry
 import * as Sentry from "@sentry/node";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
 
-Sentry.init({ /* your Sentry config */ });
+Sentry.init({
+  /* your Sentry config */
+});
 
 const inngest = new Inngest({
   id: "my-app",
