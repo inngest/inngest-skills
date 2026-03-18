@@ -12,8 +12,7 @@ Comprehensive guide to handling errors, configuring retries, and building resili
 
 ```typescript
 const errorHandlingExample = inngest.createFunction(
-  { id: "error-handling-demo", retries: 3 },
-  { event: "demo/error-handling" },
+  { id: "error-handling-demo", retries: 3, triggers: [{ event: "demo/error-handling" }] },
   async ({ event, step }) => {
     try {
       // This step can error and retry up to 3 times
@@ -42,9 +41,9 @@ const errorHandlingExample = inngest.createFunction(
 const customRetries = inngest.createFunction(
   {
     id: "custom-retries",
-    retries: 10 // Each step gets up to 10 retries (11 total attempts)
+    retries: 10, // Each step gets up to 10 retries (11 total attempts)
+    triggers: [{ event: "critical/task" }]
   },
-  { event: "critical/task" },
   async ({ event, step, attempt }) => {
     // attempt is 0-indexed: 0, 1, 2, ..., 10
 
@@ -65,8 +64,7 @@ const customRetries = inngest.createFunction(
 
 ```typescript
 const independentRetries = inngest.createFunction(
-  { id: "independent-retries", retries: 4 },
-  { event: "multi/step.process" },
+  { id: "independent-retries", retries: 4, triggers: [{ event: "multi/step.process" }] },
   async ({ event, step }) => {
     // Step 1: Can retry up to 4 times independently
     const userData = await step.run("fetch-user", async () => {
@@ -97,8 +95,7 @@ const independentRetries = inngest.createFunction(
 import { NonRetriableError } from "inngest";
 
 const smartErrorHandling = inngest.createFunction(
-  { id: "smart-error-handling" },
-  { event: "process/user" },
+  { id: "smart-error-handling", triggers: [{ event: "process/user" }] },
   async ({ event, step }) => {
     const user = await step.run("validate-and-fetch-user", async () => {
       // Check if user exists
@@ -134,8 +131,7 @@ const smartErrorHandling = inngest.createFunction(
 
 ```typescript
 const commonNonRetriableErrors = inngest.createFunction(
-  { id: "non-retriable-examples" },
-  { event: "example/errors" },
+  { id: "non-retriable-examples", triggers: [{ event: "example/errors" }] },
   async ({ event, step }) => {
     // Authentication/Authorization errors
     await step.run("check-permissions", async () => {
@@ -180,8 +176,7 @@ const commonNonRetriableErrors = inngest.createFunction(
 import { RetryAfterError } from "inngest";
 
 const respectRateLimit = inngest.createFunction(
-  { id: "rate-limited-api" },
-  { event: "api/call.requested" },
+  { id: "rate-limited-api", triggers: [{ event: "api/call.requested" }] },
   async ({ event, step }) => {
     const result = await step.run("call-external-api", async () => {
       try {
@@ -215,8 +210,7 @@ const respectRateLimit = inngest.createFunction(
 
 ```typescript
 const dynamicRetryStrategy = inngest.createFunction(
-  { id: "dynamic-retry" },
-  { event: "process/adaptive" },
+  { id: "dynamic-retry", triggers: [{ event: "process/adaptive" }] },
   async ({ event, step, attempt }) => {
     const result = await step.run("adaptive-processing", async () => {
       try {
@@ -256,8 +250,7 @@ const dynamicRetryStrategy = inngest.createFunction(
 
 ```typescript
 const fallbackPattern = inngest.createFunction(
-  { id: "fallback-services" },
-  { event: "process/with-fallback" },
+  { id: "fallback-services", triggers: [{ event: "process/with-fallback" }] },
   async ({ event, step }) => {
     let result;
     let service = "primary";
@@ -298,6 +291,7 @@ const processWithFailureHandler = inngest.createFunction(
   {
     id: "process-with-failure-handler",
     retries: 3,
+    triggers: [{ event: "risky/process" }],
     onFailure: async ({ event, error }) => {
       // This runs when function fails after all retries
       // Access run_id from the failure event data
@@ -320,7 +314,6 @@ const processWithFailureHandler = inngest.createFunction(
       });
     }
   },
-  { event: "risky/process" },
   async ({ event, step }) => {
     // This might fail after retries
     const result = await step.run("risky-operation", async () => {
@@ -338,8 +331,7 @@ const processWithFailureHandler = inngest.createFunction(
 
 ```typescript
 const structuredErrorLogging = inngest.createFunction(
-  { id: "structured-error-logging" },
-  { event: "process/with-logging" },
+  { id: "structured-error-logging", triggers: [{ event: "process/with-logging" }] },
   async ({ event, step, logger }) => {
     const baseContext = {
       eventName: event.name,

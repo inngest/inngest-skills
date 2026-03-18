@@ -197,8 +197,7 @@ export const inngest = new Inngest({
 
 ```typescript
 const observableFunction = inngest.createFunction(
-  { id: "observable-function" },
-  { event: "process/observable" },
+  { id: "observable-function", triggers: [{ event: "process/observable" }] },
   async ({ event, step, logger, runId }) => {
     // Logger automatically includes function metadata when using .child()
     logger.info("Function started", {
@@ -260,8 +259,7 @@ const observableFunction = inngest.createFunction(
 
 ```typescript
 const correlatedLogging = inngest.createFunction(
-  { id: "correlated-logging" },
-  { event: "process/correlated" },
+  { id: "correlated-logging", triggers: [{ event: "process/correlated" }] },
   async ({ event, step, logger, runId }) => {
     // Create correlation context
     const correlationId = event.data.correlationId || runId;
@@ -339,8 +337,7 @@ const correlatedLogging = inngest.createFunction(
 import { trace, context, SpanStatusCode } from "@opentelemetry/api";
 
 const customTracing = inngest.createFunction(
-  { id: "custom-tracing" },
-  { event: "process/traced" },
+  { id: "custom-tracing", triggers: [{ event: "process/traced" }] },
   async ({ event, step }) => {
     const tracer = trace.getTracer("my-app");
 
@@ -473,8 +470,7 @@ export const inngest = new Inngest({
 
 ```typescript
 const healthCheck = inngest.createFunction(
-  { id: "health-check" },
-  { cron: "*/5 * * * *" }, // Every 5 minutes
+  { id: "health-check", triggers: [{ cron: "*/5 * * * *" }] }, // Every 5 minutes
   async ({ step, logger }) => {
     const healthStatus = {
       services: {}
@@ -543,8 +539,7 @@ const healthCheck = inngest.createFunction(
 
 ```typescript
 const debugFunction = inngest.createFunction(
-  { id: "debug-function" },
-  { event: "debug/test" },
+  { id: "debug-function", triggers: [{ event: "debug/test" }] },
   async ({ event, step, logger }) => {
     // Enable debug logging conditionally
     const isDebugMode =

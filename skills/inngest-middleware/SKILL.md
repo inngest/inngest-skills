@@ -42,9 +42,9 @@ inngest.createFunction(
     middleware: [
       authMiddleware, // Runs 3rd
       metricsMiddleware // Runs 4th
-    ]
+    ],
+    triggers: [{ event: "test" }]
   },
-  { event: "test" },
   async () => {
     /* function code */
   }
@@ -145,8 +145,7 @@ const inngest = new Inngest({
 
 // Functions automatically get injected dependencies
 inngest.createFunction(
-  { id: "ai-summary" },
-  { event: "document/uploaded" },
+  { id: "ai-summary", triggers: [{ event: "document/uploaded" }] },
   async ({ event, openai, db }) => {
     // Dependencies available in function context
     const summary = await openai.chat.completions.create({
