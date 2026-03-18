@@ -210,7 +210,22 @@ const square = await step.invoke("get-square", {
 });
 
 console.log(square.result); // 16, fully typed!
+
+// For cross-app invocation (when you can't import the function directly):
+import { referenceFunction } from "inngest";
+
+const externalFn = referenceFunction({
+  appId: "other-app",
+  functionId: "other-fn",
+});
+
+const result = await step.invoke("call-external", {
+  function: externalFn,
+  data: { key: "value" },
+});
 ```
+
+**Warning: v4 Breaking Change:** String function IDs (e.g., `function: "my-app-other-fn"`) are no longer supported in `step.invoke()`. Use an imported function reference or `referenceFunction()` for cross-app calls.
 
 **Great for:**
 

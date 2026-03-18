@@ -370,7 +370,17 @@ const inngest = new Inngest({
   id: "my-app",
   logger // Pass logger to client
 });
+
+// Or use the built-in ConsoleLogger for simple log level control
+import { ConsoleLogger, Inngest } from "inngest";
+
+const inngest = new Inngest({
+  id: "my-app",
+  logger: new ConsoleLogger({ level: "debug" }) // "debug" | "info" | "warn" | "error"
+});
 ```
+
+**⚠️ v4 Breaking Change:** The `logLevel` option has been removed. Use the `logger` option with `ConsoleLogger` or a custom logger instead.
 
 ### **Function Logging Patterns**
 

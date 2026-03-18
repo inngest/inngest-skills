@@ -178,6 +178,8 @@ app.use(
 - **AWS Lambda**: Use `inngest/lambda`
 - For all other frameworks, check the `serve` reference here: https://www.inngest.com/docs-markdown/learn/serving-inngest-functions
 
+**⚠️ v4 Change:** Options like `signingKey`, `signingKeyFallback`, and `baseUrl` are now configured on the `Inngest` client constructor, not on `serve()`. The `serve()` function only accepts `client`, `functions`, and `streaming`.
+
 **⚠️ Common Gotcha**: Always use `/api/inngest` as your endpoint path. This enables automatic discovery. If you must use a different path, you'll need to configure discovery manually with the `-u` flag.
 
 ## Step 4B: Connect as Worker (WebSocket Mode)

@@ -9,6 +9,8 @@ Master Inngest middleware to handle cross-cutting concerns like logging, error t
 
 > **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
 
+> **Note:** The middleware system was significantly rewritten in v4. The lifecycle hooks documented here reflect the v4 API. If migrating from v3, consult the [migration guide](https://www.inngest.com/docs/reference/typescript/v4/migrations/v3-to-v4) for details on breaking changes.
+
 ## What is Middleware?
 
 Middleware allows code to run at various points in an Inngest client's lifecycle - during function execution, event sending, and more. Think of middleware as hooks into the Inngest execution pipeline.
