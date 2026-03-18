@@ -30,8 +30,7 @@ const inngest = new Inngest({
 
 // Functions automatically get injected dependencies
 inngest.createFunction(
-  { id: "ai-summary" },
-  { event: "document/uploaded" },
+  { id: "ai-summary", triggers: [{ event: "document/uploaded" }] },
   async ({ event, openai, db, redis }) => {
     // All dependencies available in function context
     const summary = await openai.chat.completions.create({
@@ -102,8 +101,7 @@ const inngest = new Inngest({
 
 // Function with injected dependencies
 inngest.createFunction(
-  { id: "process-payment" },
-  { event: "checkout/completed" },
+  { id: "process-payment", triggers: [{ event: "checkout/completed" }] },
   async ({ event, stripe, analytics, notifications }) => {
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({

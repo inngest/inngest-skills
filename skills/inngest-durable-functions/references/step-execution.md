@@ -19,8 +19,7 @@ Deep dive into how Inngest executes steps, handles memoization, and manages stat
 
 ```typescript
 const importContacts = inngest.createFunction(
-  { id: "import-contacts" },
-  { event: "contacts/csv.uploaded" },
+  { id: "import-contacts", triggers: [{ event: "contacts/csv.uploaded" }] },
   async ({ event, step }) => {
     // HTTP Request #1 - Executes and returns
     const rows = await step.run("parse-csv", async () => {
@@ -107,8 +106,7 @@ await step.run("process-user-data", () => processUserData()); // Will re-execute
 
 ```typescript
 const robustProcess = inngest.createFunction(
-  { id: "robust-process" },
-  { event: "process/data" },
+  { id: "robust-process", triggers: [{ event: "process/data" }] },
   async ({ event, step }) => {
     // Step 1: Completes successfully
     const data = await step.run("fetch-external-data", async () => {
@@ -139,8 +137,7 @@ const robustProcess = inngest.createFunction(
 
 ```typescript
 const parallelProcess = inngest.createFunction(
-  { id: "parallel-process" },
-  { event: "process/parallel" },
+  { id: "parallel-process", triggers: [{ event: "process/parallel" }] },
   async ({ event, step }) => {
     const userData = await step.run("fetch-user", () => {
       return getUserData(event.data.userId);
@@ -162,8 +159,7 @@ const parallelProcess = inngest.createFunction(
 
 ```typescript
 const conditionalSteps = inngest.createFunction(
-  { id: "conditional-steps" },
-  { event: "user/signup" },
+  { id: "conditional-steps", triggers: [{ event: "user/signup" }] },
   async ({ event, step }) => {
     const user = await step.run("create-user", () => {
       return createUser(event.data);
@@ -194,8 +190,7 @@ const conditionalSteps = inngest.createFunction(
 
 ```typescript
 const dynamicSteps = inngest.createFunction(
-  { id: "dynamic-steps" },
-  { event: "batch/process" },
+  { id: "dynamic-steps", triggers: [{ event: "batch/process" }] },
   async ({ event, step }) => {
     const items = await step.run("fetch-items", () => {
       return getItemsToProcess(event.data.batchId);
@@ -225,8 +220,7 @@ const dynamicSteps = inngest.createFunction(
 ```typescript
 // ❌ TOO GRANULAR: Many small steps
 const tooGranular = inngest.createFunction(
-  { id: "too-granular" },
-  { event: "process/data" },
+  { id: "too-granular", triggers: [{ event: "process/data" }] },
   async ({ event, step }) => {
     const a = await step.run("step-1", () => simpleOperation1());
     const b = await step.run("step-2", () => simpleOperation2(a));
@@ -237,8 +231,7 @@ const tooGranular = inngest.createFunction(
 
 // ✅ BETTER: Logical grouping
 const betterGrouping = inngest.createFunction(
-  { id: "better-grouping" },
-  { event: "process/data" },
+  { id: "better-grouping", triggers: [{ event: "process/data" }] },
   async ({ event, step }) => {
     const processedData = await step.run("process-data-batch", () => {
       const a = simpleOperation1();
@@ -271,8 +264,7 @@ const betterGrouping = inngest.createFunction(
 // - Simple conditionals
 
 const goodPatterns = inngest.createFunction(
-  { id: "good-patterns" },
-  { event: "process/user" },
+  { id: "good-patterns", triggers: [{ event: "process/user" }] },
   async ({ event, step }) => {
     // ✅ Regular code: deterministic validation
     if (!event.data.email || !event.data.userId) {
