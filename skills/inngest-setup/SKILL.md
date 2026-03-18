@@ -192,7 +192,6 @@ For long-running applications that maintain persistent connections:
 
 ```typescript
 // src/worker.ts
-// Note: inngest/connect requires inngest SDK v3.27+
 import { connect } from "inngest/connect";
 import { inngest } from "./inngest/client";
 import { myFunction } from "./inngest/functions";
@@ -218,6 +217,11 @@ import { myFunction } from "./inngest/functions";
 - Long-running server environment (not serverless)
 - `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY` for production
 - Set the `appVersion` parameter on the `Inngest` client for production to support rolling deploys
+
+**v4 Connect Changes:**
+
+- **Worker thread isolation** is enabled by default — WebSocket connections execute in a worker thread to prevent event loop starvation. Set `isolateExecution: false` to use a single process (or `INNGEST_CONNECT_ISOLATE_EXECUTION=false`)
+- **`rewriteGatewayEndpoint`** callback has been replaced with the `gatewayUrl` string option (or `INNGEST_CONNECT_GATEWAY_URL` env var)
 
 ## Step 5: Organizing with Apps
 
