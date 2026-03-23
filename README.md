@@ -15,6 +15,7 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 | [inngest-flow-control](./skills/inngest-flow-control/)           | Configure Inngest flow control for functions                 | Concurrency limits, throttling, rate limiting, debounce, priority, batching    |
 | [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
 | [inngest-realtime](./skills/inngest-realtime/)                   | Stream durable workflow updates to a UI in real time         | v4 native realtime, channels, subscription tokens, `useRealtime` hook, SSE     |
+| [inngest-cli](./skills/inngest-cli/)                             | Install and use the Inngest CLI and Dev Server               | Dev server, auto-discovery, Docker, testing, MCP server, deployment workflow   |
 
 ## Language Support
 
