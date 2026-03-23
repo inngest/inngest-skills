@@ -163,7 +163,7 @@ export const processUploadV2 = inngest.createFunction(
 
 ## Event Schema Versioning with the `v` Field
 
-Use the event `v` field to version event schemas and route to different function versions.
+The `v` field is **purely metadata** — Inngest does not assign it any built-in behavior. It only becomes meaningful when you reference it in `if` expressions to route events to different function versions.
 
 ### Sending Versioned Events
 
@@ -198,12 +198,12 @@ import { Inngest } from "inngest";
 
 const inngest = new Inngest({ id: "my-app" });
 
-// Handle V1 events
+// Handle V1 events (including unversioned events sent before v field was added)
 export const handleProfileUpdateV1 = inngest.createFunction(
   { id: "handle-profile-update-v1" },
   {
     event: "user/profile.updated",
-    if: 'event.v == "1" || event.v == null',
+    if: 'event.v != "2"',
   },
   async ({ event, step }) => {
     await step.run("update-profile", async () => {
@@ -265,7 +265,7 @@ export const processPaymentLegacy = inngest.createFunction(
   { id: "process-payment-legacy" },
   {
     event: "billing/payment.received",
-    if: `event.v == null && event.ts < ${CUTOVER_TS}`,
+    if: `event.v != "2" && event.ts < ${CUTOVER_TS}`,
   },
   async ({ event, step }) => {
     await step.run("process", async () => {
@@ -302,8 +302,7 @@ Inngest uses CEL (Common Expression Language) for `if` expressions:
 | Expression | Description |
 |---|---|
 | `event.v == "2"` | Match specific version |
-| `event.v != "2"` | Exclude specific version |
-| `event.v == null` | Match unversioned events |
+| `event.v != "2"` | Exclude specific version (also matches unversioned events) |
 | `event.ts < 1704067200000` | Match events before timestamp |
 | `event.ts >= 1704067200000` | Match events at or after timestamp |
 | `event.v == "2" && event.data.region == "us"` | Combine conditions |
@@ -317,10 +316,11 @@ When versioning functions or events:
 1. **Never change a function ID** — this creates a new function, not an update
 2. **Use different IDs for V1 and V2 functions** when running side by side
 3. **Ensure `if` expressions are mutually exclusive** — every event should match exactly one function
-4. **Handle unversioned events** — use `event.v == null` for events sent before versioning was added
+4. **Handle unversioned events** — use `event.v != "2"` (not `== null`) to catch events sent before versioning was added
 5. **Monitor in-progress runs** — remove old function versions only after all their runs complete
 6. **There is no built-in drain mechanism** — you must monitor and wait for V1 runs to finish manually
-7. **Test with the Dev Server** — pause execution with `step.sleep()`, modify code, and observe memoization behavior
+7. **Resync after deploying** — Inngest requires a resync whenever you deploy new function configurations. Integration-based syncing (Vercel, Netlify) handles this automatically; otherwise resync manually or via curl
+8. **Test with the Dev Server** — pause execution with `step.sleep()`, modify code, and observe memoization behavior
 
 ## Common Patterns
 
@@ -400,7 +400,7 @@ export const processOrder = inngest.createFunction(
 |---|---|---|
 | Function appears as new in dashboard | Function ID was changed | Restore original ID; use a separate V2 function for major rewrites |
 | Both V1 and V2 trigger for same event | `if` expressions overlap | Ensure expressions are mutually exclusive |
-| Old events don't match any function | Missing handler for `event.v == null` | Add a catch-all for unversioned events |
+| Old events don't match any function | Missing catch-all for unversioned events | Use `event.v != "2"` on the V1 handler to match all non-V2 events |
 | Step runs again unexpectedly | Step ID was changed | Keep step IDs stable unless you intentionally want re-execution |
 | In-progress run skips new step | New step depends on another new step's data | Ensure new steps only use data from previously memoized steps or the event |
 
