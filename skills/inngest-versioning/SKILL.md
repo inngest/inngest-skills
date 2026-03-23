@@ -251,7 +251,7 @@ v: "1.2.3";
 
 ## Combined Pattern: Version Field + Timestamp Cutover
 
-For maximum control, combine both strategies:
+For maximum control, combine both strategies. Use `event.v` to route versioned events and timestamp as a fallback for unversioned legacy events:
 
 ```typescript
 import { Inngest } from "inngest";
@@ -260,12 +260,32 @@ const inngest = new Inngest({ id: "my-app" });
 
 const CUTOVER_TS = 1704067200000;
 
-// Legacy handler — pre-cutover events only
+// V2 handler — explicitly versioned events
+export const processPaymentV2 = inngest.createFunction(
+  { id: "process-payment-v2" },
+  {
+    event: "billing/payment.received",
+    if: 'event.v == "2"',
+  },
+  async ({ event, step }) => {
+    await step.run("validate-payment", async () => {
+      return validatePayment(event.data);
+    });
+    await step.run("process-payment", async () => {
+      return processPayment(event.data);
+    });
+    await step.run("reconcile", async () => {
+      return reconcileAccounts(event.data);
+    });
+  }
+);
+
+// Legacy handler — unversioned events before cutover
 export const processPaymentLegacy = inngest.createFunction(
   { id: "process-payment-legacy" },
   {
     event: "billing/payment.received",
-    if: `event.ts < ${CUTOVER_TS}`,
+    if: `event.v != "2" && event.ts < ${CUTOVER_TS}`,
   },
   async ({ event, step }) => {
     await step.run("process", async () => {
@@ -274,12 +294,12 @@ export const processPaymentLegacy = inngest.createFunction(
   }
 );
 
-// Current handler — post-cutover events (expects v2 schema)
-export const processPaymentV2 = inngest.createFunction(
-  { id: "process-payment-v2" },
+// Catch-all — unversioned events after cutover (treats as v2)
+export const processPaymentFallback = inngest.createFunction(
+  { id: "process-payment-fallback" },
   {
     event: "billing/payment.received",
-    if: `event.ts >= ${CUTOVER_TS}`,
+    if: `event.v != "2" && event.ts >= ${CUTOVER_TS}`,
   },
   async ({ event, step }) => {
     await step.run("validate-payment", async () => {
@@ -294,6 +314,8 @@ export const processPaymentV2 = inngest.createFunction(
   }
 );
 ```
+
+**Three handlers ensure exhaustive routing:** `v == "2"` events go to V2, pre-cutover non-v2 events go to legacy, and post-cutover non-v2 events hit the fallback. No event is dropped.
 
 ## Expression Syntax Quick Reference
 
