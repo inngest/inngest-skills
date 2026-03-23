@@ -260,12 +260,12 @@ const inngest = new Inngest({ id: "my-app" });
 
 const CUTOVER_TS = 1704067200000;
 
-// Catch-all for legacy events (no version field, before cutover)
+// Legacy handler — pre-cutover events only
 export const processPaymentLegacy = inngest.createFunction(
   { id: "process-payment-legacy" },
   {
     event: "billing/payment.received",
-    if: `event.v != "2" && event.ts < ${CUTOVER_TS}`,
+    if: `event.ts < ${CUTOVER_TS}`,
   },
   async ({ event, step }) => {
     await step.run("process", async () => {
@@ -274,12 +274,12 @@ export const processPaymentLegacy = inngest.createFunction(
   }
 );
 
-// Current version with explicit schema
+// Current handler — post-cutover events (expects v2 schema)
 export const processPaymentV2 = inngest.createFunction(
   { id: "process-payment-v2" },
   {
     event: "billing/payment.received",
-    if: 'event.v == "2"',
+    if: `event.ts >= ${CUTOVER_TS}`,
   },
   async ({ event, step }) => {
     await step.run("validate-payment", async () => {
