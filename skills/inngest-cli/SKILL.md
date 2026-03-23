@@ -68,7 +68,7 @@ npx --ignore-scripts=false inngest-cli@latest dev --no-discovery -u http://local
 
 Without `--no-discovery`, the Dev Server scans common ports and endpoints automatically:
 
-**Ports scanned:** 80, 443, 3000–3010, 5000, 5173, 8000, 8080, 8081, 8787, 8888, 8910–8915
+**Ports scanned:** Common development ports including 3000, 3030, and others
 
 **Endpoints scanned:**
 - `/api/inngest`
@@ -285,18 +285,22 @@ Runs Inngest as a self-hosted production server. **Not the same as `inngest dev`
 inngest start --event-key <key> --signing-key <key>
 ```
 
-| Flag | Default | Description |
-|---|---|---|
-| `--port` | `8288` | Server port |
-| `--signing-key` | | Hex key for request signing |
-| `--event-key` | | Authentication key for apps |
-| `--redis-uri` | | External Redis connection |
-| `--postgres-uri` | | External PostgreSQL connection |
-| `--poll-interval` | | App sync polling interval (seconds) |
-| `--queue-workers` | `100` | Number of executor workers |
-| `--connect-gateway-port` | `8289` | Connect gateway port |
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--port` | `-p` | `8288` | Server port |
+| `--signing-key` | | | Hex key for request signing (even character count) |
+| `--event-key` | | | Authentication key for apps (repeatable) |
+| `--sdk-url` | `-u` | | App serve URLs (repeatable) |
+| `--redis-uri` | | | External Redis connection |
+| `--postgres-uri` | | | External PostgreSQL connection |
+| `--sqlite-dir` | | | SQLite database directory |
+| `--poll-interval` | | `0` | App sync polling interval (seconds) |
+| `--queue-workers` | | `100` | Number of executor workers |
+| `--connect-gateway-port` | | `8289` | Connect gateway port |
+| `--log-level` | `-l` | `info` | Logging level (trace, debug, info, warn, error) |
+| `--no-ui` | | | Disable web UI and GraphQL API |
 
-**Environment variable convention:** Convert flags to uppercase with underscores, prefix with `INNGEST_` (e.g., `--signing-key` becomes `INNGEST_SIGNING_KEY`).
+**Environment variable convention:** Convert flags to uppercase with underscores, prefix with `INNGEST_` (e.g., `--signing-key` becomes `INNGEST_SIGNING_KEY`). Exception: log level uses `LOG_LEVEL` (no prefix).
 
 Default persistence: in-memory Redis + SQLite at `./.inngest/main.db`. For production, use external Redis and PostgreSQL.
 
@@ -330,11 +334,12 @@ INNGEST_SIGNING_KEY=<your-signing-key>
 
 | Platform | Gotcha |
 |---|---|
-| **Express** | Requires `express.json()` middleware; increase `limit` for large payloads |
+| **Express** | Requires `express.json()` middleware; default body limit is `100kb` — increase to handle Inngest payloads (up to 4MB) |
 | **AWS Lambda** | Set `INNGEST_SERVE_ORIGIN` and `INNGEST_SERVE_PATH` explicitly — auto-inference fails |
 | **Firebase Cloud Functions** | Must set `INNGEST_SERVE_PATH` env var |
 | **DigitalOcean Functions** | Both `serveOrigin` and `servePath` required in `serve()` config |
 | **Cloudflare Workers (Wrangler `--remote`)** | Requires tunnel (ngrok/localtunnel) for Dev Server connection |
+| **Supabase Edge Functions** | `servePath` must match function name — Supabase rewrites request paths |
 | **Google Cloud Run (1st gen)** | Not officially supported; may cause signature verification errors |
 | **Docker** | Must set `INNGEST_DEV=1` — SDK defaults to Cloud mode |
 | **External webhooks (Stripe, Clerk)** | Require tunnel solution (ngrok, localtunnel) for local testing |
