@@ -14,6 +14,7 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 | [inngest-steps](./skills/inngest-steps/)                         | Use Inngest step methods to build durable workflows          | step.run, step.sleep, step.waitForEvent, loops, parallel execution             |
 | [inngest-flow-control](./skills/inngest-flow-control/)           | Configure Inngest flow control for functions                 | Concurrency limits, throttling, rate limiting, debounce, priority, batching    |
 | [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
+| [inngest-webhooks](./skills/inngest-webhooks/)                   | Create and configure Inngest webhooks                        | Transforms, signature verification, REST API, event keys, integrations         |
 
 ## Language Support
 
