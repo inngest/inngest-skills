@@ -188,8 +188,8 @@ expect(stepResult).toEqual(123);
 
 // Assert step state
 const { state } = await t.execute();
-expect(state["my-step"]).resolves.toEqual("output");
-expect(state["risky-step"]).rejects.toThrowError("failed");
+await expect(state["my-step"]).resolves.toEqual("output");
+await expect(state["risky-step"]).rejects.toThrowError("failed");
 
 // Mock events
 const { result: eventResult } = await t.execute({
@@ -219,7 +219,7 @@ docker run -p 8288:8288 -p 8289:8289 \
   inngest dev -u http://host.docker.internal:3000/api/inngest
 ```
 
-Use `host.docker.internal` to reach your app running on the host machine.
+Use `host.docker.internal` to reach your app running on the host machine (works out of the box on Docker Desktop). On Linux, add `--add-host=host.docker.internal:host-gateway` or use an equivalent host-access method.
 
 ### Docker Compose
 
