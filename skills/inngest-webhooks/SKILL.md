@@ -261,7 +261,7 @@ curl -X POST "https://inn.gs/e/$INNGEST_EVENT_KEY" \
   -d '{ "name": "test/event", "data": {} }'
 ```
 
-**The value must be the branch environment name**, not the ID from the dashboard URL. Events sent without this header go to the default environment.
+**The value must be the branch environment name**, not the ID from the dashboard URL. If `x-inngest-env` is omitted, events go to the branch events page and **will NOT trigger any functions**.
 
 ## Event Keys
 
@@ -282,7 +282,7 @@ import { Inngest } from "inngest";
 const inngest = new Inngest({ id: "my-app" });
 
 // Or pass explicitly (not recommended for production)
-const inngest = new Inngest({ id: "my-app", eventKey: "xyz..." });
+// const inngest = new Inngest({ id: "my-app", eventKey: "xyz..." });
 ```
 
 **Security rules:**
