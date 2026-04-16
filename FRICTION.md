@@ -14,6 +14,40 @@ Live capture of friction discovered while using the Inngest skills + dev server 
 
 ## Entries
 
+### 2026-04-16 — MCP tool verification (content moderation pipeline, 3 test events)
+
+**F8: get_run_status returns `steps: null` — no step output or return values**
+- Trying to: Verify content moderation decisions (approved vs flagged) via MCP
+- What broke: Both `get_run_status` and `poll_run_status` return `"steps": null`. Functions complete but you can't see WHAT they decided. The most natural question ("was this flagged or approved?") is unanswerable from the MCP tools.
+- Workaround: None via MCP. Must check app logs manually.
+- Fix: **get_run_status should include step outputs and function return values.** This is the biggest MCP gap. Without it, the tools verify execution but not correctness.
+- Severity: **CRITICAL** (renders MCP debugging useless for anything beyond "did it run?")
+- Product implication: This directly blocks the "AI-assisted debugging" use case. A coding agent can't help debug a function if it can't see what the function returned.
+
+**F9: Cascade runs from step.sendEvent are invisible**
+- Trying to: Trace the full moderation pipeline (moderate-content emits content/moderated, triggers notify-moderation-result)
+- What broke: `send_event` MCP tool only returns run IDs for directly-triggered functions. Downstream runs from `step.sendEvent` inside a function are untraceable. No tool to find runs by event name or function slug.
+- Workaround: None via MCP
+- Fix: **Add a list_runs tool with filters** (by function ID, event name, time range, status). Or have send_event/get_run_status include downstream run IDs.
+- Severity: HIGH (multi-function workflows are untestable)
+- Product implication: Critical for the CLI. Any `inngest runs list --function=X` command needs this server-side.
+
+**F10: No way to query runs by function or event name**
+- Trying to: Find notify-moderation-result runs after pipeline completed
+- What broke: Can only look up runs by ID. No search/filter capability.
+- Workaround: None
+- Fix: **Add list_runs MCP tool** with function/event/status/time filters
+- Severity: HIGH (same as F9, fundamental missing tool)
+
+**F11: poll_run_status is redundant with get_run_status when steps are null**
+- Trying to: Watch pipeline execution in real-time
+- What broke: Nothing breaks, but `poll_run_status` returns the same empty shape as `get_run_status` — no step progress, no intermediate output. Polling adds no value over a single get when both omit step data.
+- Workaround: N/A
+- Fix: Tied to F8. Once step output is included, polling becomes genuinely useful (showing step-by-step progress).
+- Severity: LOW (redundancy, not breakage)
+
+---
+
 ### 2026-04-16 — Autonomous plugin tests (2 repos: Express integration + greenfield pipeline)
 
 **F1: SDK v4 createFunction signature mismatch in skills**
