@@ -12,6 +12,33 @@ Live capture of friction discovered while using the Inngest skills + dev server 
 
 ---
 
+## Product/Eng Items (needs Linear tickets)
+
+These are NOT plugin issues. They're friction in the Inngest dev server MCP or the platform itself, discovered via plugin testing. Sterling to triage into Linear.
+
+| # | Severity | Issue | Owner |
+|---|----------|-------|-------|
+| F8 | **CRITICAL** | `get_run_status` returns `steps: null` — no step output or return values. MCP tools verify execution but not correctness. | Dev server MCP |
+| F9 | HIGH | Cascade runs from `step.sendEvent` invisible to MCP tools. No way to trace downstream runs. | Dev server MCP |
+| F10 | HIGH | No `list_runs` tool with filters (function, event, status, time). Can only look up by run ID. | Dev server MCP |
+| F4 | LOW | `list_functions` has no app filtering. Noise from all registered apps. | Dev server MCP |
+| F11 | LOW | `poll_run_status` redundant with `get_run_status` when steps are null. Tied to F8. | Dev server MCP |
+| F1 | HIGH | Inngest docs site (served via `grep_docs` MCP tool) still shows v3 `createFunction` patterns. | Docs team |
+
+---
+
+## Plugin Items (resolved or in progress)
+
+| # | Status | Issue |
+|---|--------|-------|
+| F2 | RESOLVED | INNGEST_DEV=1 now has prominent callout section in setup skill |
+| F3 | RESOLVED | Dev server registration troubleshooting added to setup skill |
+| F5 | RESOLVED | isDev: true hardcoding warned against explicitly |
+| F6 | LOW/OPEN | Unused NonRetriableError import in generated code (cosmetic) |
+| F7 | N/A | CLI background execution log capture (not a plugin issue) |
+
+---
+
 ## Entries
 
 ### 2026-04-16 — MCP tool verification (content moderation pipeline, 3 test events)
@@ -50,27 +77,30 @@ Live capture of friction discovered while using the Inngest skills + dev server 
 
 ### 2026-04-16 — Autonomous plugin tests (2 repos: Express integration + greenfield pipeline)
 
-**F1: SDK v4 createFunction signature mismatch in skills**
+**F1: SDK v4 createFunction signature from docs (not plugin skills)**
 - Trying to: Create Inngest functions using plugin skill guidance
-- What broke: Skills show 3-argument form `createFunction(config, trigger, handler)` but SDK v4.2.4 requires triggers inside config: `createFunction({ id, triggers: [{ event: "..." }] }, handler)`. Both test agents initially wrote v3-style code. Runtime error: *"Triggers belong in the first argument"*
-- Workaround: The runtime error message is actually decent and agents self-corrected
-- Fix: **Update all 6 skills in inngest-skills repo to v4 syntax.** This is the #1 friction source. Every new user of the plugin will hit this.
-- Severity: HIGH (100% reproduction rate)
-- Product implication: The SDK migration path from v3 to v4 needs better tooling. If official docs also show v3, this compounds.
+- What broke: Agent found v3 3-argument `createFunction(config, trigger, handler)` patterns via `grep_docs` MCP tool (which searches inngest.com docs), not from the plugin skills. Plugin skills already use correct v4 syntax. Runtime error: *"Triggers belong in the first argument"*
+- Workaround: The runtime error message is decent and agents self-corrected
+- Fix: **Docs site** needs v3 patterns updated. Plugin skills are already v4-correct.
+- Status: **RESOLVED for plugin.** Docs site issue remains (product/eng).
+- Severity: HIGH on docs side. Plugin is fine.
+- Product implication: The SDK migration path from v3 to v4 needs better tooling. `grep_docs` MCP tool serves docs that still show v3 patterns.
 
-**F2: INNGEST_DEV=1 not mentioned in setup skill**
+**F2: INNGEST_DEV=1 not prominent enough in setup skill**
 - Trying to: Start Express app with Inngest serve endpoint
-- What broke: GET /api/inngest returns `{"code":"internal_server_error"}`. Server logs say "In cloud mode but no signing key found" but only after startup. No env var guidance in the inngest-setup skill.
+- What broke: GET /api/inngest returns `{"code":"internal_server_error"}`. Server logs say "In cloud mode but no signing key found" but only after startup. The setup skill mentioned INNGEST_DEV but it was buried in config options.
 - Workaround: Agent figured it out from error message and added `INNGEST_DEV=1` to dev script
-- Fix: **`inngest-setup` skill must include `INNGEST_DEV=1` in all local dev examples.** Maybe also in the MCP server README.
-- Severity: HIGH (blocks the entire dev loop for new users)
+- Fix: Added prominent "CRITICAL: Enable Dev Mode" section before serve endpoints, with symptoms checklist.
+- Status: **RESOLVED in plugin.** Commit pending.
+- Severity: HIGH (was blocking, now fixed)
 
 **F3: Dev server doesn't auto-discover local apps**
 - Trying to: List functions after starting Express app on port 3001
-- What broke: `list_functions` MCP tool still showed functions from a different app. Had to manually POST /fn/register with the app URL. No guidance in skills or MCP docs about how to trigger registration.
-- Workaround: Manual sync via POST request. `--no-discovery` flag on dev server was used (our setup), which disables scanning. Without it, dev server scans common ports.
-- Fix: **Add registration guidance to inngest-setup skill.** "If using --no-discovery, add -u http://localhost:PORT/api/inngest to the dev command." Also consider: should the SDK auto-register when INNGEST_DEV=1?
-- Severity: MEDIUM (confusing but has workarounds)
+- What broke: `list_functions` MCP tool still showed functions from a different app. Had to manually POST /fn/register with the app URL. No guidance in skills about how to trigger registration.
+- Workaround: Manual sync via POST request. `--no-discovery` flag on dev server was used (our setup), which disables scanning.
+- Fix: Added troubleshooting guidance to setup skill: `--no-discovery` requires `-u`, registration flow explanation, restart sequence.
+- Status: **RESOLVED in plugin.** Commit pending. Remaining question for product: should the SDK auto-register when INNGEST_DEV=1?
+- Severity: MEDIUM (was confusing, now documented)
 
 **F4: list_functions MCP tool scoping confusion**
 - Trying to: Verify newly registered functions appear
@@ -84,8 +114,9 @@ Live capture of friction discovered while using the Inngest skills + dev server 
 - Trying to: Initialize Inngest client in new project
 - What broke: Nothing broke, but agent wrote `new Inngest({ id: "content-moderation", isDev: true })` instead of using INNGEST_DEV env var. This works locally but would fail in production.
 - Workaround: N/A (not caught by agent)
-- Fix: **Skills should explicitly say "never hardcode isDev. Use INNGEST_DEV=1 env var."** The current skill text is silent on this.
-- Severity: MEDIUM (silent production bug if shipped)
+- Fix: Added explicit warning: "Never hardcode isDev: true in source code — it will silently break in production. Always use the env var."
+- Status: **RESOLVED in plugin.** Commit pending.
+- Severity: MEDIUM (was silent production bug risk, now warned)
 
 **F6: Unused NonRetriableError import in generated code**
 - Trying to: Generate Inngest function with error handling
