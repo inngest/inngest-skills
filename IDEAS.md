@@ -2,6 +2,11 @@
 
 Running list of features to build into the plugin. Captured as they come up, not triaged yet. Sterling reviews periodically and promotes to Linear tickets when worth building.
 
+**Related:**
+- [ROADMAP.md](./ROADMAP.md) — plugin scope and direction (ideas feed into use cases here)
+- [FRICTION.md](./FRICTION.md) — live friction log (also feeds the roadmap)
+- Linear: [DEV-315](https://linear.app/inngest/issue/DEV-315/inngest-claude-code-plugin-roadmap-and-v1-scope)
+
 **Format:**
 - **Idea title**
 - Why: what problem does it solve

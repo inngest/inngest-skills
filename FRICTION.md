@@ -4,6 +4,11 @@ Live capture of friction discovered while using the Inngest skills + dev server 
 
 **How to use:** Drop entries below as you hit them. Fast and ugly is fine. Sterling triages weekly into Linear tickets.
 
+**Related:**
+- [ROADMAP.md](./ROADMAP.md) — plugin scope and direction (friction items become work here)
+- [IDEAS.md](./IDEAS.md) — feature ideas backlog
+- Linear: [DEV-315](https://linear.app/inngest/issue/DEV-315/inngest-claude-code-plugin-roadmap-and-v1-scope)
+
 **Format:**
 - **Date** — what you were trying to do
 - **What broke / what felt wrong**
