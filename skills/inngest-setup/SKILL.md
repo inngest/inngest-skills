@@ -1,6 +1,6 @@
 ---
 name: inngest-setup
-description: Set up Inngest in a TypeScript project. Install the SDK, create a client, configure environment variables, serve endpoints or connect as a worker, and run the local dev server.
+description: Use when adding durable execution to a TypeScript project — building retry-safe webhook handlers, background jobs that survive crashes, scheduled tasks, or long-running workflows that outlive a single request. Covers Inngest SDK installation, client config, environment variables, serve endpoints (Next.js, Express, Hono, Fastify), connect-as-worker mode, and the local dev server.
 ---
 
 # Inngest Setup

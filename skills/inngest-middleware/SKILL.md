@@ -1,6 +1,6 @@
 ---
 name: inngest-middleware
-description: Create and use Inngest middleware for cross-cutting concerns. Covers the middleware lifecycle, creating custom middleware, dependency injection with dependencyInjectionMiddleware, encryption via @inngest/middleware-encryption, Sentry error tracking via @inngest/middleware-sentry, and custom middleware patterns.
+description: Use when adding cross-cutting concerns to durable functions — structured logging or tracing across all functions, error tracking with Sentry, payload encryption for sensitive data, dependency injection of clients (DB, Stripe, etc.) into function handlers, custom telemetry, or behavior that should apply uniformly across many functions. Covers Inngest middleware lifecycle, creating custom middleware, dependencyInjectionMiddleware, @inngest/middleware-encryption, @inngest/middleware-sentry, and custom middleware patterns.
 ---
 
 # Inngest Middleware
