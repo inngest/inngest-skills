@@ -3,7 +3,7 @@
 Plugin scope, current state, and where it's going. This is the source of
 truth for plugin direction. Notion mirror keeps it visible to the team.
 
-**Notion:** _(pending — will link once page exists)_
+**Notion:** [Inngest Claude Code Plugin — Roadmap](https://www.notion.so/34cb64753bbd81e9aeb0cb138743c37f)
 **Linear:** [DEV-315](https://linear.app/inngest/issue/DEV-315/inngest-claude-code-plugin-roadmap-and-v1-scope)
 **Friction log:** [FRICTION.md](./FRICTION.md)
 **Ideas backlog:** [IDEAS.md](./IDEAS.md)
@@ -189,7 +189,7 @@ is the first instance. Captured in
 - **GitHub:** this repo, branch `sterling/dogfood`. Roadmap lives in
   `ROADMAP.md`.
 - **Linear:** [DEV-315](https://linear.app/inngest/issue/DEV-315/inngest-claude-code-plugin-roadmap-and-v1-scope) — tracking ticket
-- **Notion:** _(pending)_
+- **Notion:** [Inngest Claude Code Plugin — Roadmap](https://www.notion.so/34cb64753bbd81e9aeb0cb138743c37f) — DevRel hub mirror
 - **Friction log:** [FRICTION.md](./FRICTION.md) feeds new ideas + bug fixes
 - **Ideas backlog:** [IDEAS.md](./IDEAS.md) holds unscoped feature ideas
 
