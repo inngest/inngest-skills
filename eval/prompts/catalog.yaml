@@ -395,3 +395,46 @@ prompts:
       avoided_antipattern: |
         No p-limit, no bottleneck, no custom exponential backoff. No Redis
         token bucket. No BullMQ wrapper. Not just "add more retries."
+
+  - id: "11"
+    slug: realtime-publish-method-choice
+    prompt: |
+      We have an Inngest function that fulfills orders — capture payment,
+      reserve inventory, charge shipping. We want a live order status page
+      that animates as each step completes, plus mid-step progress updates
+      (e.g., "payment intent created" before the charge confirms). Wire up
+      the publishes inside the function. We're on the v4 SDK.
+    targets:
+      primitives:
+        - step.realtime.publish (between steps)
+        - inngest.realtime.publish (inside step.run)
+        - durable channel publish
+        - typed channels
+      naive_traps:
+        - using step.realtime.publish inside step.run (creates step-in-step)
+        - using inngest.realtime.publish between steps (loses durability)
+        - middleware-injected publish from @inngest/realtime (v3 API on a v4 project)
+        - WebSocket server hand-rolled alongside the function
+    rubric:
+      durability: |
+        Publishes between step.run calls are wrapped durably so a retry of
+        the function doesn't re-publish stale "running" updates. Mid-step
+        publishes inside step.run don't double-wrap (no step-in-step).
+      correctness: |
+        Status updates appear on the channel in the order they happen.
+        Each step.run boundary emits at least a "running" + a terminal
+        ("complete" or "failed") update. Mid-step partial updates fire
+        from inside the relevant step.run.
+      reached_for_inngest: |
+        Uses both `step.realtime.publish(id, topicRef, data)` between steps
+        AND `inngest.realtime.publish(topicRef, data)` inside step.run.
+        Recognizes that the choice depends on whether the call site is
+        inside or outside a memoized step. Uses v4 native APIs from
+        `inngest` and `inngest/realtime`, not the deprecated
+        `@inngest/realtime` v3 package.
+      avoided_antipattern: |
+        Does NOT call `step.realtime.publish` from inside `step.run` (would
+        create a step inside a step). Does NOT call `inngest.realtime.publish`
+        between steps as the only publish path (would silently lose
+        durability on retry). No `@inngest/realtime` package install. No
+        hand-rolled WebSocket layer alongside the function.

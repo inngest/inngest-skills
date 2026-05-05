@@ -18,6 +18,7 @@ building durable systems with Inngest:
 | `inngest-steps` | step.run, step.sleep, step.waitForEvent, step.invoke, step.ai |
 | `inngest-flow-control` | Concurrency, throttling, rate limits, debounce, batching |
 | `inngest-middleware` | Cross-cutting concerns, dependency injection |
+| `inngest-realtime` | v4 native realtime, channels, subscription tokens, React/SSE consumers |
 
 The plugin also ships a local dev server MCP config (`.mcp.json`) so
 Claude Code can interact with the Inngest dev server directly when
@@ -117,6 +118,6 @@ change to skill descriptions or content.
 
 Releases are tagged in this repo.
 
-- **v0.1.0** — first standalone release, six skills covering the core
+- **v0.1.0** — first standalone release, seven skills covering the core
   TypeScript durable-execution surface, dev server MCP config, eval
   harness scaffolding
