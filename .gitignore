@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+eval/runs/
+
+# Internal-only working files
+FRICTION.md
+IDEAS.md

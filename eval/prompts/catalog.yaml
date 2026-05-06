@@ -1,0 +1,440 @@
+# Inngest Plugin Eval Catalog
+#
+# Each prompt is a realistic dev request that does NOT mention Inngest.
+# The harness runs each prompt in two paired repos (plugin on / plugin off),
+# both using subject_model. The judge compares the outputs against the rubric.
+#
+# A "win" for plugin-on means the agent reached for Inngest primitives
+# proactively, without being told to. That's the whole point of the plugin.
+
+version: 1
+subject_model: opus-4.7
+judge_model: opus-4.7
+
+prompts:
+  - id: "01"
+    slug: stripe-webhook-drops
+    prompt: |
+      Our Stripe webhook handler for checkout.session.completed drops events
+      sometimes. We're seeing customers who paid but never got their order
+      confirmation email or their account upgraded. Can you rewrite the
+      handler so we stop losing these?
+    targets:
+      primitives:
+        - step.run
+        - retries
+        - idempotency
+        - event-driven
+      naive_traps:
+        - manual retry loop in the webhook handler
+        - raw try/catch as the only resilience mechanism
+        - in-process job queue (BullMQ, Bee-Queue)
+        - detached Promise after responding 200
+    rubric:
+      durability: |
+        Solution survives process crashes mid-execution. If the server dies
+        between sending the email and upgrading the account, the remaining
+        work still runs on recovery without re-running what already succeeded.
+      correctness: |
+        Stripe signature is verified. Each checkout.session.completed event
+        results in exactly one order confirmation email and one account
+        upgrade. Webhook responds 200 fast enough to avoid Stripe retries
+        caused by the handler itself.
+      idempotency: |
+        Stripe's at-least-once delivery is handled. Replay of the same event
+        does not double-send email or double-upgrade the account. Ideally
+        uses the Stripe event ID as an idempotency key.
+      reached_for_inngest: |
+        Webhook delegates to an Inngest function (triggered by a
+        stripe/checkout.completed event or similar). Each side effect lives
+        inside its own step.run so each is individually memoized and retried.
+      avoided_antipattern: |
+        No manual retry loop. No setTimeout/setInterval. No in-process queue
+        library as the resilience layer. No fire-and-forget detached Promise.
+
+  - id: "02"
+    slug: video-processing-poll
+    prompt: |
+      We send videos to an external encoding service. It's async: we call
+      their API, get a job ID, encoding takes 5 to 15 minutes. Right now a
+      cron job polls every minute to check if jobs are done, then emails the
+      user. It's fragile and we miss completions sometimes. Rewrite this.
+    targets:
+      primitives:
+        - step.waitForEvent
+        - step.sleep
+        - step.run
+        - durable polling
+      naive_traps:
+        - setInterval or setTimeout
+        - node-cron or similar in-process cron
+        - in-memory Map of pending job IDs
+        - DB polling loop without durable state
+    rubric:
+      durability: |
+        Pending encoding jobs survive server restarts and deploys. If the
+        process dies during the 5-15 minute wait, notification still fires
+        when encoding completes.
+      correctness: |
+        User is notified exactly once per completed encoding. No missed
+        completions.
+      idempotency: |
+        Same job ID cannot trigger two notifications. Triggering the flow
+        twice for the same video does not double-notify.
+      reached_for_inngest: |
+        Uses a durable Inngest function. Either step.waitForEvent listening
+        for an encoding completion event (if the provider supports webhooks),
+        or a durable poll loop with step.sleep + step.run. State survives
+        restarts because Inngest persists it.
+      avoided_antipattern: |
+        No setInterval, no node-cron, no in-memory pending-job map. No
+        naive DB polling loop where the loop state lives in a live process.
+
+  - id: "03"
+    slug: hubspot-sync-cron
+    prompt: |
+      We have a daily 2am cron job that pulls new leads from HubSpot into
+      our Postgres database. It keeps failing partway through because HubSpot
+      rate-limits us around the 3rd or 4th page. When it fails we lose the
+      whole day's sync. Fix this.
+    targets:
+      primitives:
+        - cron trigger
+        - step.run per page
+        - throttle
+        - automatic retries
+        - rate limiting
+      naive_traps:
+        - try/catch around the whole sync
+        - p-limit or bottleneck for rate limiting
+        - manual exponential backoff
+        - custom resume-from-last-page logic
+    rubric:
+      durability: |
+        Partial failures don't lose work. If page 4 fails, pages 1-3 don't
+        re-run on retry. Only the failing page retries. The full day's leads
+        eventually land in Postgres even across multiple retry cycles.
+      correctness: |
+        All new leads for the day end up in Postgres. HubSpot rate limits
+        are respected so the sync doesn't trigger 429s in the first place.
+      idempotency: |
+        Re-running after a partial failure doesn't duplicate leads in
+        Postgres. Same HubSpot lead ID never gets inserted twice.
+      reached_for_inngest: |
+        Cron-triggered Inngest function. Each page fetched inside its own
+        step.run so pagination state is durable. Flow control (throttle or
+        rate limit) configured to match HubSpot's limits.
+      avoided_antipattern: |
+        No single try/catch wrapping the entire sync. No p-limit or custom
+        rate limiter in userland. No manual exponential backoff state.
+
+  - id: "04"
+    slug: signup-side-effects
+    prompt: |
+      When a user signs up we need to: send a welcome email, create a Stripe
+      customer, add them to our HubSpot CRM, and subscribe them to our
+      mailing list. Right now these are 4 sequential awaits in the signup
+      handler. Sometimes Stripe is slow, the request times out, and we end
+      up with a user in our DB but no Stripe customer. Fix this.
+    targets:
+      primitives:
+        - event-driven
+        - step.run per side effect
+        - fan-out
+        - idempotency
+      naive_traps:
+        - Promise.all for the side effects
+        - BullMQ or similar external queue
+        - a single async function kicked off detached
+        - sequential awaits with nested try/catch
+    rubric:
+      durability: |
+        If Stripe is slow or fails, the signup HTTP response is not blocked.
+        The Stripe customer creation retries automatically without manual
+        intervention. User record and side effects eventually reach a
+        consistent state.
+      correctness: |
+        Signup handler returns fast. Every successful signup eventually has
+        a welcome email sent, Stripe customer created, HubSpot contact
+        added, and mailing list subscription.
+      idempotency: |
+        Replay doesn't create duplicate Stripe customers or duplicate
+        HubSpot contacts. Each side effect is individually safe to retry.
+      reached_for_inngest: |
+        Signup handler writes user record and emits a user.created (or
+        similar) event, then returns. An Inngest function triggered by that
+        event runs each side effect inside step.run. Handler is fast and
+        side effects are durable.
+      avoided_antipattern: |
+        No Promise.all in the handler blocking the response. No BullMQ or
+        equivalent external queue just to decouple. No detached Promise.
+        No nested try/catch as the resilience strategy.
+
+  - id: "05"
+    slug: ai-review-gate
+    prompt: |
+      We're building a workflow where an AI generates a blog post draft, a
+      human reviews and approves it, then we publish. The human review can
+      take anywhere from minutes to days. How do I model this?
+    targets:
+      primitives:
+        - step.waitForEvent
+        - step.run
+        - long-running durable workflow
+        - timeout handling
+      naive_traps:
+        - DB state machine with cron polling
+        - setTimeout for the review window
+        - webhook-driven imperative logic across endpoints
+        - in-memory pending-reviews map
+    rubric:
+      durability: |
+        The pending-review state survives server restarts, deploys, and
+        days of wait time. A review completed 3 days later still triggers
+        the publish step.
+      correctness: |
+        Draft generates, review is awaited, publish happens exactly once
+        after approval. If review is rejected or times out, the right
+        branch is taken.
+      idempotency: |
+        If the approval event fires twice, publish still only happens once.
+        Regenerating the same draft twice doesn't create duplicate posts.
+      reached_for_inngest: |
+        An Inngest function that: step.run(generate), step.waitForEvent(
+        approval, timeout: "7d" or similar), then step.run(publish). State
+        lives in Inngest, not in application DB or memory.
+      avoided_antipattern: |
+        No cron job scanning a pending_reviews table. No setTimeout. No
+        custom webhook endpoints stitched together to simulate a state
+        machine. No in-memory pending map.
+
+  - id: "06"
+    slug: newsletter-fanout
+    prompt: |
+      Our newsletter send endpoint times out. We loop through 50,000
+      subscribers and call our email provider for each one. Lambda kills the
+      function at 15 minutes. Make this work.
+    targets:
+      primitives:
+        - fan-out via sendEvent
+        - per-subscriber function
+        - concurrency limit
+        - throttle
+      naive_traps:
+        - Promise.all over the full subscriber list
+        - manual batching into chunks with await in a loop
+        - SQS or BullMQ just for the fan-out
+        - increasing the Lambda timeout
+    rubric:
+      durability: |
+        If the sender crashes mid-run, the remaining subscribers still get
+        emailed on retry. Subscribers already sent to are not re-emailed.
+        No single process holds the send state.
+      correctness: |
+        Every subscriber receives exactly one newsletter per send. The
+        process completes even though the work far exceeds any single
+        function's timeout.
+      idempotency: |
+        Same per-subscriber send is safe to retry (e.g., idempotency key
+        per subscriber + newsletter ID). Re-triggering the overall send
+        doesn't flood subscribers with duplicates.
+      reached_for_inngest: |
+        Trigger emits one event to initiate the send. That handler fans
+        out via step.sendEvent (or multiple events) one per subscriber. A
+        second function triggered per subscriber email event does the
+        actual send. Concurrency limit or throttle on the send function.
+      avoided_antipattern: |
+        No Promise.all over 50k items. No in-function batching loop as
+        the "fix." No external queue brought in just for this. Not just
+        "raise the timeout."
+
+  - id: "07"
+    slug: pdf-endpoint-timeout
+    prompt: |
+      Our POST /api/reports endpoint generates a big PDF and takes about 60
+      seconds. Users are seeing 504 timeouts on our load balancer. What's
+      the right way to fix this?
+    targets:
+      primitives:
+        - async background execution via sendEvent
+        - event-driven completion notification
+        - step.run for the generation work
+      naive_traps:
+        - raise the load balancer timeout
+        - detached Promise after responding
+        - in-process worker thread
+        - "just throw it in a background job" without durability
+    rubric:
+      durability: |
+        PDF generation survives API server restarts. If the API process
+        dies after the request is accepted, the PDF still gets generated.
+      correctness: |
+        Endpoint responds fast (well under the LB timeout) with a job ID
+        or similar handle. PDF is delivered to the client (polling, webhook,
+        or completion event) when ready.
+      idempotency: |
+        Same request parameters don't generate duplicate PDFs. Retry-safe.
+      reached_for_inngest: |
+        Endpoint emits a reports.generate event and returns 202 with a job
+        ID immediately. An Inngest function triggered by that event runs
+        step.run(generatePdf), then emits or stores the result.
+      avoided_antipattern: |
+        No "just raise the LB timeout." No detached Promise in the
+        endpoint. No worker_threads as the answer.
+
+  - id: "08"
+    slug: file-upload-pipeline
+    prompt: |
+      After a user uploads a file we need to virus scan it, extract text,
+      generate embeddings, and write to our vector DB. Right now it's all
+      in the upload handler, the request takes 20+ seconds, and half the
+      time something fails and we have no idea where it broke. Help.
+    targets:
+      primitives:
+        - step.run per pipeline stage
+        - event-driven pipeline
+        - memoization for partial replay
+        - observability via step boundaries
+      naive_traps:
+        - one giant function with nested try/catch
+        - chained .then() with custom error handling
+        - separate endpoints for each stage
+        - pipeline coordinated by a DB status column
+    rubric:
+      durability: |
+        If embedding generation fails, the virus scan and text extraction
+        don't re-run on retry. Each stage is individually durable and
+        resumable.
+      correctness: |
+        All four stages run in order. Final state: file is scanned, text
+        extracted, embeddings generated, and vector DB updated. Failures
+        at any stage are visible.
+      idempotency: |
+        Same file uploaded twice doesn't create duplicate vector records.
+        Retrying a failed embedding doesn't re-insert text or duplicate
+        embeddings.
+      reached_for_inngest: |
+        An Inngest function triggered by file.uploaded. Each stage is its
+        own step.run: step.run(virusScan), step.run(extractText),
+        step.run(generateEmbeddings), step.run(writeToVectorDB). Each
+        step's output is memoized.
+      avoided_antipattern: |
+        No single endpoint doing all four stages inline. No nested try/catch
+        as the observability story. No DB status column-driven state machine.
+
+  - id: "09"
+    slug: cart-abandonment
+    prompt: |
+      We want to send an abandoned cart email: if a user adds items to their
+      cart but doesn't check out within 24 hours, email them a reminder.
+      How would you build this?
+    targets:
+      primitives:
+        - step.waitForEvent with timeout
+        - step.sleep
+        - step.run for the email send
+      naive_traps:
+        - setTimeout (won't survive restart)
+        - cron job scanning a carts table every hour
+        - Redis TTL + keyspace notifications
+        - BullMQ delayed job
+    rubric:
+      durability: |
+        The 24-hour wait survives server restarts and deploys. A cart
+        created right before a deploy still triggers the reminder 24 hours
+        later.
+      correctness: |
+        User receives the reminder if and only if checkout didn't happen
+        within 24 hours. Reminder is sent exactly once per abandoned cart.
+      idempotency: |
+        If cart.created fires twice for the same cart, not two reminders.
+        If checkout fires after the reminder, the reminder isn't retracted
+        but also isn't sent again.
+      reached_for_inngest: |
+        An Inngest function triggered by cart.created. Uses either
+        step.waitForEvent("checkout.completed", timeout: "24h", match:
+        "data.cartId") and sends the email if the wait times out, or
+        step.sleep("24h") followed by step.run to check cart state.
+      avoided_antipattern: |
+        No setTimeout. No cron polling a carts table. No Redis TTL hack.
+        No external delayed-job library as the durability layer.
+
+  - id: "10"
+    slug: openai-rate-limit
+    prompt: |
+      We use OpenAI to summarize user-uploaded docs. When users upload in
+      bulk we hammer OpenAI, hit 429 rate limits, and our retries make it
+      worse. We're burning money on duplicate retries too. How do we fix?
+    targets:
+      primitives:
+        - throttle flow control
+        - concurrency limit
+        - idempotency per document
+        - step.run
+      naive_traps:
+        - p-limit or bottleneck in userland
+        - custom exponential backoff logic
+        - Redis-based token bucket
+        - queue-everything-to-BullMQ
+    rubric:
+      durability: |
+        In-flight summarization survives crashes. A doc that was being
+        summarized when the process died gets summarized on retry without
+        being double-charged.
+      correctness: |
+        Every uploaded doc eventually gets summarized. OpenAI rate limits
+        are respected so 429s are avoided instead of handled.
+      idempotency: |
+        Same document never summarized twice (no duplicate OpenAI charges).
+        Retry of a failed summarization uses the same inputs and is safe.
+      reached_for_inngest: |
+        An Inngest function triggered per doc. Flow control configured with
+        throttle (or concurrency) matching the OpenAI tier. Actual API call
+        wrapped in step.run so a successful summarization isn't re-charged
+        on retry.
+      avoided_antipattern: |
+        No p-limit, no bottleneck, no custom exponential backoff. No Redis
+        token bucket. No BullMQ wrapper. Not just "add more retries."
+
+  - id: "11"
+    slug: realtime-publish-method-choice
+    prompt: |
+      We have an Inngest function that fulfills orders — capture payment,
+      reserve inventory, charge shipping. We want a live order status page
+      that animates as each step completes, plus mid-step progress updates
+      (e.g., "payment intent created" before the charge confirms). Wire up
+      the publishes inside the function. We're on the v4 SDK.
+    targets:
+      primitives:
+        - step.realtime.publish (between steps)
+        - inngest.realtime.publish (inside step.run)
+        - durable channel publish
+        - typed channels
+      naive_traps:
+        - using step.realtime.publish inside step.run (creates step-in-step)
+        - using inngest.realtime.publish between steps (loses durability)
+        - middleware-injected publish from @inngest/realtime (v3 API on a v4 project)
+        - WebSocket server hand-rolled alongside the function
+    rubric:
+      durability: |
+        Publishes between step.run calls are wrapped durably so a retry of
+        the function doesn't re-publish stale "running" updates. Mid-step
+        publishes inside step.run don't double-wrap (no step-in-step).
+      correctness: |
+        Status updates appear on the channel in the order they happen.
+        Each step.run boundary emits at least a "running" + a terminal
+        ("complete" or "failed") update. Mid-step partial updates fire
+        from inside the relevant step.run.
+      reached_for_inngest: |
+        Uses both `step.realtime.publish(id, topicRef, data)` between steps
+        AND `inngest.realtime.publish(topicRef, data)` inside step.run.
+        Recognizes that the choice depends on whether the call site is
+        inside or outside a memoized step. Uses v4 native APIs from
+        `inngest` and `inngest/realtime`, not the deprecated
+        `@inngest/realtime` v3 package.
+      avoided_antipattern: |
+        Does NOT call `step.realtime.publish` from inside `step.run` (would
+        create a step inside a step). Does NOT call `inngest.realtime.publish`
+        between steps as the only publish path (would silently lose
+        durability on retry). No `@inngest/realtime` package install. No
+        hand-rolled WebSocket layer alongside the function.

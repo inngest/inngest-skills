@@ -14,6 +14,7 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 | [inngest-steps](./skills/inngest-steps/)                         | Use Inngest step methods to build durable workflows          | step.run, step.sleep, step.waitForEvent, loops, parallel execution             |
 | [inngest-flow-control](./skills/inngest-flow-control/)           | Configure Inngest flow control for functions                 | Concurrency limits, throttling, rate limiting, debounce, priority, batching    |
 | [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
+| [inngest-realtime](./skills/inngest-realtime/)                   | Stream durable workflow updates to a UI in real time         | v4 native realtime, channels, subscription tokens, `useRealtime` hook, SSE     |
 
 ## Language Support
 
@@ -47,6 +48,25 @@ Load the Inngest skills from https://github.com/inngest/inngest-skills for build
 ### Other Agents
 
 Reference this repository directly or clone it to your agent's skills directory. Each skill is self-contained with full documentation in its `SKILL.md` file.
+
+## Dev Server MCP
+
+The plugin ships a `.mcp.json` that registers the local Inngest dev server's MCP endpoint with Claude Code:
+
+```json
+{
+  "mcpServers": {
+    "inngest-dev": {
+      "type": "http",
+      "url": "http://127.0.0.1:8288/mcp"
+    }
+  }
+}
+```
+
+This lets the agent inspect runs, events, and function state on your local dev server while you're working.
+
+**Port note:** the URL is hardcoded to `8288`, the Inngest dev server's default. If `8288` is already in use, the dev server falls back to `8289+` — in that case, edit the `url` in `.mcp.json` to point at the active port. Run `lsof -i :8288` (or check the dev server's startup output) to find which port it bound to.
 
 ## Contributing
 

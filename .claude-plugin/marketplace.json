@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "inngest-skills",
-      "description": "Agent skills for building with Inngest's durable execution platform. Covers SDK setup, events, durable functions, steps, flow control, and middleware.",
+      "description": "Agent skills for building with Inngest's durable execution platform. Covers SDK setup, events, durable functions, steps, flow control, middleware, and realtime.",
       "category": "development",
       "source": "./",
       "skills": [
@@ -20,7 +20,8 @@
         "./skills/inngest-steps",
         "./skills/inngest-events",
         "./skills/inngest-flow-control",
-        "./skills/inngest-middleware"
+        "./skills/inngest-middleware",
+        "./skills/inngest-realtime"
       ],
       "repository": "https://github.com/inngest/inngest-skills",
       "homepage": "https://www.inngest.com/docs/ai-dev-tools/agent-skills"
