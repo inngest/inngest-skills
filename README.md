@@ -1,8 +1,17 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/inngest-wordmark-light.png">
+    <img src="assets/inngest-wordmark.png" alt="Inngest" width="280">
+  </picture>
+</p>
+
 # Inngest Agent Skills
 
-Agent Skills for building with Inngest's durable execution platform. These skills provide AI agents with comprehensive guidance on creating reliable, fault-tolerant applications using Inngest.
+Agent Skills for building with [Inngest](https://www.inngest.com)'s durable execution platform. These skills give AI coding agents comprehensive guidance on creating reliable, fault-tolerant applications: durable functions, events, steps, flow control, middleware, realtime, CLI operations, and REST API fallback.
 
-Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://inngest.com).
+> **Looking for the full agent-plugin experience?** Use the [Inngest plugin for Claude Code](https://github.com/inngest/inngest-claude-code-plugin) or the [Inngest plugin for Codex](https://github.com/inngest/inngest-codex-plugin) — same shared skills, plus plugin-specific MCP, eval harnesses, commands, or agents.
+
+Learn more about [Agent Skills](https://agentskills.io).
 
 ## Available Skills
 
@@ -16,6 +25,7 @@ Learn more about [Agent Skills](https://agentskills.io) and [Inngest](https://in
 | [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
 | [inngest-realtime](./skills/inngest-realtime/)                   | Stream durable workflow updates to a UI in real time         | v4 native realtime, channels, subscription tokens, `useRealtime` hook, SSE     |
 | [inngest-cli](./skills/inngest-cli/)                             | Install and use the Inngest CLI and Dev Server               | Dev server, auto-discovery, Docker, testing, MCP server, deployment workflow   |
+| [inngest-api](./skills/inngest-api/)                             | Debug runs and script against Inngest from the terminal      | `inngest-cli api` commands, v2 REST API, API keys, traces, invocation, Insights |
 
 ## Language Support
 
@@ -25,18 +35,26 @@ For **Python** or **Go**, refer to the [Inngest documentation](https://www.innge
 
 ## Installation
 
-### Claude Code
-
-```bash
-/plugin marketplace add inngest/inngest-skills
-/plugin install inngest-skills@inngest-agent-skills
-```
-
 ### Skills.sh
 
 ```bash
 npx skills add inngest/inngest-skills
 ```
+
+This installs individual skills into your global `~/.claude/skills/` directory and works with Claude Code, Claude.ai, and other agent runtimes that read skills from that path.
+
+### Claude Code and Codex Plugins
+
+For the full Claude Code experience — skills + dev-server MCP + eval harness + (coming soon) commands and agents — install the Claude Code plugin:
+
+```
+/plugin marketplace add inngest/inngest-claude-code-plugin
+/plugin install inngest@inngest-claude-code-plugin
+```
+
+See the [plugin repo](https://github.com/inngest/inngest-claude-code-plugin) for details.
+
+For Codex, install the [Codex plugin](https://github.com/inngest/inngest-codex-plugin) from its `plugins/inngest` bundle.
 
 ### Cursor
 
@@ -50,24 +68,24 @@ Load the Inngest skills from https://github.com/inngest/inngest-skills for build
 
 Reference this repository directly or clone it to your agent's skills directory. Each skill is self-contained with full documentation in its `SKILL.md` file.
 
-## Dev Server MCP
+## Repository layout
 
-The plugin ships a `.mcp.json` that registers the local Inngest dev server's MCP endpoint with Claude Code:
+This repo is the **source of truth for the skills themselves**. The Claude Code and Codex plugins pull from here.
 
-```json
-{
-  "mcpServers": {
-    "inngest-dev": {
-      "type": "http",
-      "url": "http://127.0.0.1:8288/mcp"
-    }
-  }
-}
+```
+skills/
+├── inngest-setup/
+├── inngest-durable-functions/
+├── inngest-steps/
+├── inngest-events/
+├── inngest-flow-control/
+├── inngest-middleware/
+├── inngest-realtime/
+├── inngest-cli/
+└── inngest-api/
 ```
 
-This lets the agent inspect runs, events, and function state on your local dev server while you're working.
-
-**Port note:** the URL is hardcoded to `8288`, the Inngest dev server's default. If `8288` is already in use, the dev server falls back to `8289+` — in that case, edit the `url` in `.mcp.json` to point at the active port. Run `lsof -i :8288` (or check the dev server's startup output) to find which port it bound to.
+If you're authoring or editing a skill, do it here. The plugin repo syncs from this one.
 
 ## Contributing
 
