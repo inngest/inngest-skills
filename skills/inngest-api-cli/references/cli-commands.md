@@ -1,4 +1,4 @@
-# `inngest-cli api` Command Reference
+# `inngest api` Command Reference
 
 Complete flag reference for every `inngest api` subcommand, captured from CLI v1.27.0. The CLI itself is authoritative: `npx inngest-cli@latest api <command> --help`.
 
