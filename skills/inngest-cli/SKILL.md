@@ -9,7 +9,7 @@ Master the Inngest CLI for local development, testing, and self-hosted productio
 
 > **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
 
-Use this skill for CLI setup, Dev Server workflows, local testing, Docker, MCP, and self-hosted server operations. For run/trace inspection through `inngest api`, use the dedicated API operations skill when available.
+Use this skill for CLI setup, Dev Server workflows, local testing, Docker, MCP, and self-hosted server operations. For run/trace inspection through `inngest api`, use `inngest-api-cli` when available.
 
 ## Installation
 
