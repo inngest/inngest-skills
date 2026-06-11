@@ -25,7 +25,8 @@ Learn more about [Agent Skills](https://agentskills.io).
 | [inngest-middleware](./skills/inngest-middleware/)               | Create and use Inngest middleware for cross-cutting concerns | Middleware lifecycle, dependency injection, built-in middleware                |
 | [inngest-realtime](./skills/inngest-realtime/)                   | Stream durable workflow updates to a UI in real time         | v4 native realtime, channels, subscription tokens, `useRealtime` hook, SSE     |
 | [inngest-cli](./skills/inngest-cli/)                             | Install and use the Inngest CLI and Dev Server               | Dev server, auto-discovery, Docker, testing, MCP server, deployment workflow   |
-| [inngest-api](./skills/inngest-api/)                             | Debug runs and script against Inngest from the terminal      | `inngest-cli api` commands, v2 REST API, API keys, traces, invocation, Insights |
+| [inngest-api-cli](./skills/inngest-api-cli/)                     | Operate Inngest API resources from the terminal             | `inngest api`, Cloud debugging, traces, event runs, invocation, Insights       |
+| [inngest-api](./skills/inngest-api/)                             | Use REST API v2 and OpenAPI fallback                        | Raw HTTP, API keys, docs lookup, request shapes, pagination, secret redaction  |
 
 ## Language Support
 
@@ -82,6 +83,7 @@ skills/
 ├── inngest-middleware/
 ├── inngest-realtime/
 ├── inngest-cli/
+├── inngest-api-cli/
 └── inngest-api/
 ```
 

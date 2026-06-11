@@ -1,7 +1,8 @@
-# Inngest Claude Code Plugin — Roadmap
+# Inngest Agent Skills — Roadmap
 
-Plugin scope and direction. See [README.md](./README.md) for installation
-and the full skill inventory.
+Shared skill scope and direction for Claude Code, Codex, and other agent
+runtimes. See [README.md](./README.md) for installation and the full skill
+inventory.
 
 ---
 
@@ -19,10 +20,13 @@ building durable systems with Inngest:
 | `inngest-flow-control` | Concurrency, throttling, rate limits, debounce, batching |
 | `inngest-middleware` | Cross-cutting concerns, dependency injection |
 | `inngest-realtime` | v4 native realtime, channels, subscription tokens, React/SSE consumers |
+| `inngest-cli` | General CLI and dev server workflows: install/run `inngest dev`, local testing, Docker, MCP setup, deployment checks, and self-hosted `inngest start` |
+| `inngest-api-cli` | Prescriptive terminal workflows for `inngest api`, Cloud debugging, run traces, event runs, app syncs, invocation, webhooks, envs, keys, and Insights |
+| `inngest-api` | REST API v2 and OpenAPI fallback when raw HTTP is needed or the CLI does not expose an endpoint |
 
-The plugin also ships a local dev server MCP config (`.mcp.json`) so
-Claude Code can interact with the Inngest dev server directly when
-debugging functions.
+Plugin bundles can also ship local dev server MCP config (`.mcp.json`) so
+Claude Code, Codex, or other MCP-capable agents can interact with the Inngest
+dev server directly when debugging functions.
 
 **Skill descriptions are written as problem-shape triggers** — they fire
 on phrases like "webhook handler that drops events," "flaky cron job,"
@@ -92,9 +96,10 @@ case studies.
 
 ### Production observability
 
-The plugin's MCP surface today is dev-server only. A production-side
-MCP server is planned so Claude Code can investigate live runs, debug
-production failures, and answer questions about deployed functions.
+The plugin MCP surface today is dev-server only. A production-side MCP server
+is planned so Claude Code, Codex, and other MCP-capable agents can investigate
+live runs, debug production failures, and answer questions about deployed
+functions.
 Will apply across all use cases — greenfield through brownfield,
 post-deployment.
 
@@ -106,7 +111,7 @@ versions.
 
 ### Quality measurement
 
-The plugin ships with an eval harness in `eval/` — a 10-prompt catalog
+The plugin repos ship with eval harnesses — prompt catalogs
 of realistic dev requests scored by an LLM judge against per-prompt
 rubrics. The harness measures whether the plugin shifts agent output
 toward durable patterns. It serves as a regression net for every
@@ -121,3 +126,6 @@ Releases are tagged in this repo.
 - **v0.1.0** — first standalone release, seven skills covering the core
   TypeScript durable-execution surface, dev server MCP config, eval
   harness scaffolding
+- **v0.2.0** — adds `inngest-cli` for general CLI/dev-server workflows,
+  `inngest-api-cli` for prescriptive `inngest api` operations, and narrows
+  `inngest-api` to REST API v2/OpenAPI fallback.
