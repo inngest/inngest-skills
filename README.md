@@ -7,7 +7,7 @@
 
 # Inngest Agent Skills
 
-Agent Skills for building with [Inngest](https://www.inngest.com)'s durable execution platform. These skills give AI coding agents comprehensive guidance on creating reliable, fault-tolerant applications: durable functions, events, steps, flow control, middleware, realtime, CLI operations, and REST API fallback.
+Agent Skills for building with [Inngest](https://www.inngest.com)'s durable execution platform. These skills give AI coding agents comprehensive guidance on creating reliable, fault-tolerant applications: durable functions, events, steps, flow control, middleware, realtime, AI agents, CLI operations, REST API fallback, brownfield audits, and SDK migrations.
 
 > **Looking for the full agent-plugin experience?** Use the [Inngest plugin for Claude Code](https://github.com/inngest/inngest-claude-code-plugin) or the [Inngest plugin for Codex](https://github.com/inngest/inngest-codex-plugin) — same shared skills, plus plugin-specific MCP, eval harnesses, commands, or agents.
 
@@ -27,6 +27,9 @@ Learn more about [Agent Skills](https://agentskills.io).
 | [inngest-cli](./skills/inngest-cli/)                             | Install and use the Inngest CLI and Dev Server               | Dev server, auto-discovery, Docker, testing, MCP server, deployment workflow   |
 | [inngest-api-cli](./skills/inngest-api-cli/)                     | Operate Inngest API resources from the terminal             | `inngest api`, Cloud debugging, traces, event runs, invocation, Insights       |
 | [inngest-api](./skills/inngest-api/)                             | Use REST API v2 and OpenAPI fallback                        | Raw HTTP, API keys, docs lookup, request shapes, pagination, secret redaction  |
+| [inngest-agents](./skills/inngest-agents/)                       | Build durable AI agents and agentic workflows               | AgentKit, `step.ai`, tool calls, multi-agent networks, human approval, realtime |
+| [inngest-brownfield-audit](./skills/inngest-brownfield-audit/)   | Audit an existing codebase for durability gaps              | Repo discovery, anti-pattern detection, incremental Inngest integration plan   |
+| [inngest-v3-v4-migration](./skills/inngest-v3-v4-migration/)     | Upgrade a codebase from SDK v3 to v4                        | Usage detection, trigger/schema/serve/realtime API changes, verification       |
 
 ## Language Support
 
@@ -84,7 +87,10 @@ skills/
 ├── inngest-realtime/
 ├── inngest-cli/
 ├── inngest-api-cli/
-└── inngest-api/
+├── inngest-api/
+├── inngest-agents/
+├── inngest-brownfield-audit/
+└── inngest-v3-v4-migration/
 ```
 
 If you're authoring or editing a skill, do it here. The plugin repo syncs from this one.
