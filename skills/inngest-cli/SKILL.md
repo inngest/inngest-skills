@@ -1,6 +1,6 @@
 ---
 name: inngest-cli
-description: Install and use the Inngest CLI and Dev Server. Covers inngest dev, inngest start, auto-discovery, configuration files, Docker setup, environment variables, testing functions locally, MCP server for AI dev tools, serve() endpoint debugging, and deployment workflow from local to production.
+description: Use when installing or running the Inngest CLI and Dev Server for local development, local testing, serve endpoint debugging, Docker or Docker Compose setup, MCP configuration, self-hosted `inngest start`, or deployment workflow checks. Covers `inngest dev`, `inngest start`, auto-discovery, config files, environment variables, `@inngest/test`, local event sending, platform gotchas, and production/self-hosted server flags.
 ---
 
 # Inngest CLI
@@ -9,11 +9,13 @@ Master the Inngest CLI for local development, testing, and self-hosted productio
 
 > **These skills are focused on TypeScript.** For Python or Go, refer to the [Inngest documentation](https://www.inngest.com/llms.txt) for language-specific guidance. Core concepts apply across all languages.
 
+Use this skill for CLI setup, Dev Server workflows, local testing, Docker, MCP, and self-hosted server operations. For run/trace inspection through `inngest api`, use the dedicated API operations skill when available.
+
 ## Installation
 
 ```bash
 # npx (recommended — always latest)
-npx --ignore-scripts=false inngest-cli@latest dev
+npx inngest-cli@latest dev
 
 # yarn
 yarn dlx inngest-cli@latest dev
@@ -28,7 +30,7 @@ npm install -g inngest-cli
 docker pull inngest/inngest
 ```
 
-**The `--ignore-scripts=false` flag is required with npx** — the Inngest npm package relies on lifecycle scripts to install the CLI binary. Bun does not support lifecycle scripts by default, so use `npx` even in Bun projects.
+If your npm configuration disables lifecycle scripts and the binary is missing, retry with `npx --ignore-scripts=false inngest-cli@latest dev`. Bun does not support lifecycle scripts by default, so prefer `npx` for the CLI even in Bun projects.
 
 ## `inngest dev` — Local Dev Server
 
@@ -36,21 +38,21 @@ Starts an in-memory local version of Inngest with a browser UI at `http://localh
 
 ```bash
 # Auto-discover apps on common ports/endpoints
-npx --ignore-scripts=false inngest-cli@latest dev
+npx inngest-cli@latest dev
 
 # Specify your app URL
-npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:3000/api/inngest
+npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
 
 # Custom port
-npx --ignore-scripts=false inngest-cli@latest dev -p 9999
+npx inngest-cli@latest dev -p 9999
 
 # Multiple apps
-npx --ignore-scripts=false inngest-cli@latest dev \
+npx inngest-cli@latest dev \
   -u http://localhost:3000/api/inngest \
   -u http://localhost:4000/api/inngest
 
 # Disable auto-discovery (use with -u)
-npx --ignore-scripts=false inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest
+npx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest
 ```
 
 ### CLI Flags
@@ -59,10 +61,16 @@ npx --ignore-scripts=false inngest-cli@latest dev --no-discovery -u http://local
 |---|---|---|---|
 | `--sdk-url` | `-u` | `http://localhost:3000/api/inngest` | App serve endpoint URL(s) |
 | `--port` | `-p` | `8288` | Dev Server port |
-| `--host` | | `http://localhost` | Dev Server host |
+| `--host` | | | Dev Server host |
 | `--no-discovery` | | `false` | Disable auto-discovery of apps |
 | `--no-poll` | | `false` | Disable polling apps for changes |
 | `--config` | | | Path to configuration file |
+| `--connect-gateway-port` | | `8289` | Connect gateway endpoint port |
+| `--persist` | | `false` | Persist data between restarts |
+| `--poll-interval` | | `5` | Seconds between app polling checks |
+| `--queue-workers` | | `100` | Number of executor workers |
+| `--retry-interval` | | `0` | Linear retry interval in seconds |
+| `--tick` | | `150` | Executor queue polling interval in milliseconds |
 
 ### Auto-Discovery
 
@@ -254,7 +262,7 @@ claude mcp add --transport http inngest-dev http://127.0.0.1:8288/mcp
 ```
 
 ```json
-// .cursor/mcp.json (Cursor)
+// .cursor/mcp.json or another MCP-capable client config
 {
   "mcpServers": {
     "inngest-dev": {
@@ -297,10 +305,15 @@ inngest start --event-key <key> --signing-key <key>
 | `--poll-interval` | | `0` | App sync polling interval (seconds) |
 | `--queue-workers` | | `100` | Number of executor workers |
 | `--connect-gateway-port` | | `8289` | Connect gateway port |
-| `--log-level` | `-l` | `info` | Logging level (trace, debug, info, warn, error) |
+| `--retry-interval` | | `0` | Linear retry interval in seconds |
+| `--tick` | | `150` | Executor queue polling interval in milliseconds |
 | `--no-ui` | | | Disable web UI and GraphQL API |
+| `--postgres-conn-max-idle-time` | | `5` | PostgreSQL idle connection lifetime in minutes |
+| `--postgres-conn-max-lifetime` | | `30` | PostgreSQL maximum connection reuse time in minutes |
+| `--postgres-max-idle-conns` | | `10` | PostgreSQL max idle connections |
+| `--postgres-max-open-conns` | | `100` | PostgreSQL max open connections |
 
-**Environment variable convention:** Convert flags to uppercase with underscores, prefix with `INNGEST_` (e.g., `--signing-key` becomes `INNGEST_SIGNING_KEY`). Exception: log level uses `LOG_LEVEL` (no prefix).
+Global flags such as `--log-level`, `--verbose`, and `--json` are also available. For environment variables, follow the current CLI and deployment docs; do not assume every flag has an `INNGEST_` environment variable equivalent.
 
 Default persistence: in-memory Redis + SQLite at `./.inngest/main.db`. For production, use external Redis and PostgreSQL.
 
@@ -348,10 +361,10 @@ INNGEST_SIGNING_KEY=<your-signing-key>
 
 ```bash
 # Start dev server with auto-discovery
-npx --ignore-scripts=false inngest-cli@latest dev
+npx inngest-cli@latest dev
 
 # Start with explicit app URL
-npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:3000/api/inngest
+npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
 
 # Check serve endpoint health
 curl -s http://localhost:3000/api/inngest | jq
