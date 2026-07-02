@@ -6,10 +6,11 @@ inventory.
 
 ---
 
-## Today (v0.1.0)
+## Today (v0.3.0)
 
-The first release covers the core surface for TypeScript projects
-building durable systems with Inngest:
+The current shared skills cover the core surface for TypeScript projects
+building durable systems, durable AI agents, Agent Evals, and brownfield
+Inngest migrations:
 
 | Skill | What it covers |
 |---|---|
@@ -23,6 +24,10 @@ building durable systems with Inngest:
 | `inngest-cli` | General CLI and dev server workflows: install/run `inngest dev`, local testing, Docker, MCP setup, deployment checks, and self-hosted `inngest start` |
 | `inngest-api-cli` | Prescriptive terminal workflows for `inngest api`, Cloud debugging, run traces, event runs, app syncs, invocation, webhooks, envs, keys, and Insights |
 | `inngest-api` | REST API v2 and OpenAPI fallback when raw HTTP is needed or the CLI does not expose an endpoint |
+| `inngest-agents` | AgentKit, `step.ai`, tool calls, human review, realtime progress, provider flow control |
+| `inngest-agent-evals` | Scoring, deferred scorers, sessions, traces, step experiments, Insights, outcome-based eval loops |
+| `inngest-brownfield-audit` | Repository analysis, durability-gap discovery, incremental integration planning |
+| `inngest-v3-v4-migration` | TypeScript SDK v3 to v4 migration, mixed API cleanup, realtime migration |
 
 Plugin bundles can also ship local dev server MCP config (`.mcp.json`) so
 Claude Code, Codex, or other MCP-capable agents can interact with the Inngest
@@ -129,3 +134,6 @@ Releases are tagged in this repo.
 - **v0.2.0** — adds `inngest-cli` for general CLI/dev-server workflows,
   `inngest-api-cli` for prescriptive `inngest api` operations, and narrows
   `inngest-api` to REST API v2/OpenAPI fallback.
+- **v0.3.0** — adds `inngest-agent-evals` for Agent Evals with scoring,
+  deferred scorers, sessions, traces, step experiments, Insights, and
+  outcome-based evaluation loops.
