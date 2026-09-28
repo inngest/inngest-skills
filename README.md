@@ -49,13 +49,17 @@ npx skills add inngest/inngest-skills
 
 This installs skills for the agents and scope you select. It does not configure
 MCP connections. The `inngest-cloud` skill needs an existing OAuth connection
-to `https://api.inngest.com/mcp`; install one of the plugins below to bundle
-that connection, then sign in through the host.
+to `https://api.inngest.com/mcp`. Configure it in your host, or use a plugin
+release that includes Cloud OAuth MCP, then sign in through the host.
 
 ### Claude Code and Codex Plugins
 
-For skills, Cloud OAuth MCP, commands, agents, and the eval harness, install
-the Claude Code plugin. Local Dev Server MCP is a separate opt-in connection:
+Cloud OAuth MCP support is being added in [Claude Code plugin #3](https://github.com/inngest/inngest-claude-code-plugin/pull/3)
+and [Codex plugin #3](https://github.com/inngest/inngest-codex-plugin/pull/3).
+Until those changes are released, configure the Cloud connection separately.
+Those releases make the local Dev Server MCP a separate opt-in connection.
+
+For skills, commands, agents, and the eval harness, install the Claude Code plugin:
 
 ```
 /plugin marketplace add inngest/inngest-claude-code-plugin
