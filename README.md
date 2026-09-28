@@ -17,6 +17,7 @@ Learn more about [Agent Skills](https://agentskills.io).
 
 | Skill                                                            | Description                                                  | What It Covers                                                                 |
 | ---------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [inngest-cloud](./skills/inngest-cloud/) | Operate Inngest Cloud through OAuth MCP | Environments, apps, runs, traces, events, Insights, sessions, and experiments |
 | [inngest-setup](./skills/inngest-setup/)                         | Set up Inngest in a TypeScript project                       | SDK installation, client config, environment variables, dev server             |
 | [inngest-events](./skills/inngest-events/)                       | Design and send Inngest events                               | Event schema, naming conventions, idempotency, fan-out patterns, system events |
 | [inngest-durable-functions](./skills/inngest-durable-functions/) | Create and configure Inngest durable functions               | Triggers, step execution, memoization, cancellation, error handling, retries   |

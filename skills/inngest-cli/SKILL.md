@@ -254,36 +254,19 @@ services:
 
 ## MCP Server (AI Dev Tools)
 
-The Dev Server exposes an MCP server at `http://127.0.0.1:8288/mcp` (HTTP transport).
+The plugins bundle `inngest-cloud` for OAuth access to deployed resources.
+Local Dev Server MCP is a separate, opt-in connection named `inngest-dev`.
+Both can be used in the same coding session. For local MCP setup or connection
+troubleshooting, read [Local MCP setup](references/local-mcp.md).
 
-```bash
-# Claude Code
-claude mcp add --transport http inngest-dev http://127.0.0.1:8288/mcp
-```
+Use tools from `inngest-dev` for apps and runs on the local Dev Server. Use
+`inngest-cloud` for deployed resources, selecting the intended account and
+environment. If the target is unclear, resolve it before calling either
+server. Never switch from local to Cloud because the local server is offline.
 
-```json
-// .cursor/mcp.json or another MCP-capable client config
-{
-  "mcpServers": {
-    "inngest-dev": {
-      "url": "http://127.0.0.1:8288/mcp"
-    }
-  }
-}
-```
-
-### Available MCP Tools
-
-| Tool | Description |
-|---|---|
-| `send_event` | Send events to trigger functions |
-| `list_functions` | List all registered functions and triggers |
-| `invoke_function` | Execute a function synchronously (default 30s timeout) |
-| `get_run_status` | Get detailed status of a function run |
-| `poll_run_status` | Poll multiple runs until completion |
-| `grep_docs` | Search Inngest documentation by regex pattern |
-| `read_doc` | Read a specific documentation page |
-| `list_docs` | List available documentation structure |
+Read each server's live tool schemas. Local tools include app, function, event,
+run, and trace operations, plus embedded documentation search. Availability
+and inputs depend on the running Dev Server version.
 
 ## `inngest start` — Self-Hosted Production
 

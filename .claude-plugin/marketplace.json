@@ -1,5 +1,4 @@
 {
-  "_": "See reference: https://code.claude.com/docs/en/plugin-marketplaces#marketplace-schema",
   "name": "inngest-agent-skills",
   "metadata": {
     "description": "Inngest Agent Skills for building with Inngest's durable execution platform"
@@ -24,7 +23,8 @@
         "./skills/inngest-realtime",
         "./skills/inngest-cli",
         "./skills/inngest-api-cli",
-        "./skills/inngest-api"
+        "./skills/inngest-api",
+        "./skills/inngest-cloud"
       ],
       "repository": "https://github.com/inngest/inngest-skills",
       "homepage": "https://www.inngest.com/docs/ai-dev-tools/agent-skills"

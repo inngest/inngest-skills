@@ -11,6 +11,10 @@ description: >-
 
 # Inngest REST API v2
 
+For Cloud operations with connected MCP tools, use `inngest-cloud` first.
+Keep this skill for explicit terminal/HTTP work or a capability missing from
+MCP. Do not ask for an API key when OAuth MCP can complete the task.
+
 Use this skill for raw REST API v2 work and API reference lookup. If the task
 can be completed through `npx inngest-cli@latest api`, use `inngest-api-cli`
 instead; the CLI is safer for agents because it handles target/auth flags and
