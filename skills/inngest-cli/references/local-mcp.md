@@ -11,7 +11,8 @@ investigating a Cloud run does not opt the user into local MCP.
    instead of configuring localhost in the hosted environment.
 2. Inspect existing MCP configuration for `inngest-dev` or another connection
    to the same Dev Server. Reuse a working connection rather than add a duplicate.
-   Preserve `inngest-cloud` and unrelated servers.
+   Use that connection’s configured name for local calls, even if it is not
+   `inngest-dev`. Preserve `inngest-cloud` and unrelated servers.
 3. Start the Dev Server as part of the requested local development setup, or
    use the one already running. Read its actual URL and port from startup output
    or existing project configuration. The examples below assume port 8288;
@@ -19,9 +20,10 @@ investigating a Cloud run does not opt the user into local MCP.
 4. Add the local connection using the host-specific option below. Registration
    is a one-time setup, not something to repeat on every session.
 5. Refresh the host's MCP connections or open a new session if the new tools
-   aren't visible. Verify through the local server's read-only `get_apps` tool
-   and confirm the expected app. Do not send an event or invoke a function just
-   to verify connectivity.
+   aren't visible. Inspect its live tool schema and use a read-only discovery
+   tool such as `get_apps` or `list_functions` to confirm the expected app or
+   function. Tool names depend on the Dev Server version. Do not send an event
+   or invoke a function just to verify connectivity.
 
 ### Claude Code
 
@@ -72,7 +74,8 @@ codex mcp remove inngest-dev
 
 ## Route and recover
 
-- Keep Cloud and local tools distinct. Choose `inngest-dev` for local apps and
+- Keep Cloud and local tools distinct. Choose the configured local connection
+  (`inngest-dev` by default) for local apps and
   `inngest-cloud` for deployed apps. Ask which target is intended when unclear.
 - Local being unavailable does not mean the Cloud account needs reconnection.
   Start the intended Dev Server, correct its configured port, or disable/remove

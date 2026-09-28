@@ -24,6 +24,7 @@ constructing calls. Tool names below omit host-specific prefixes.
   grant. Neither means that a resource is absent. Do not fall back to another
   credential to bypass the connection's access limits.
 - The local Dev Server is a separate, opt-in connection named `inngest-dev`.
+  Reuse an existing local connection under its configured name.
   Both servers can coexist. Use the server matching the requested target and
   never fall back from local to Cloud on a connection failure. For local setup,
   use `inngest-cli` when installed. Cloud MCP cannot see a local process.

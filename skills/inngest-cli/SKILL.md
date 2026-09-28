@@ -259,7 +259,8 @@ Local Dev Server MCP is a separate, opt-in connection named `inngest-dev`.
 Both can be used in the same coding session. For local MCP setup or connection
 troubleshooting, read [Local MCP setup](references/local-mcp.md).
 
-Use tools from `inngest-dev` for apps and runs on the local Dev Server. Use
+Use the configured local connection for apps and runs on the Dev Server
+(`inngest-dev` by default; keep an existing connection’s name). Use
 `inngest-cloud` for deployed resources, selecting the intended account and
 environment. If the target is unclear, resolve it before calling either
 server. Never switch from local to Cloud because the local server is offline.
