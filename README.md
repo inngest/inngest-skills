@@ -17,6 +17,7 @@ Learn more about [Agent Skills](https://agentskills.io).
 
 | Skill                                                            | Description                                                  | What It Covers                                                                 |
 | ---------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [inngest-cloud](./skills/inngest-cloud/) | Operate Inngest Cloud through OAuth MCP | Environments, apps, runs, traces, events, Insights, sessions, and experiments |
 | [inngest-setup](./skills/inngest-setup/)                         | Set up Inngest in a TypeScript project                       | SDK installation, client config, environment variables, dev server             |
 | [inngest-events](./skills/inngest-events/)                       | Design and send Inngest events                               | Event schema, naming conventions, idempotency, fan-out patterns, system events |
 | [inngest-durable-functions](./skills/inngest-durable-functions/) | Create and configure Inngest durable functions               | Triggers, step execution, memoization, cancellation, error handling, retries   |
@@ -46,11 +47,19 @@ For **Python** or **Go**, refer to the [Inngest documentation](https://www.innge
 npx skills add inngest/inngest-skills
 ```
 
-This installs individual skills into your global `~/.claude/skills/` directory and works with Claude Code, Claude.ai, and other agent runtimes that read skills from that path.
+This installs skills for the agents and scope you select. It does not configure
+MCP connections. The `inngest-cloud` skill needs an existing OAuth connection
+to `https://api.inngest.com/mcp`. Configure it in your host, or use a plugin
+release that includes Cloud OAuth MCP, then sign in through the host.
 
 ### Claude Code and Codex Plugins
 
-For the full Claude Code experience — skills + dev-server MCP + eval harness + (coming soon) commands and agents — install the Claude Code plugin:
+Cloud OAuth MCP support is being added in [Claude Code plugin #3](https://github.com/inngest/inngest-claude-code-plugin/pull/3)
+and [Codex plugin #3](https://github.com/inngest/inngest-codex-plugin/pull/3).
+Until those changes are released, configure the Cloud connection separately.
+Those releases make the local Dev Server MCP a separate opt-in connection.
+
+For skills, commands, agents, and the eval harness, install the Claude Code plugin:
 
 ```
 /plugin marketplace add inngest/inngest-claude-code-plugin
@@ -79,6 +88,7 @@ This repo is the **source of truth for the skills themselves**. The Claude Code 
 
 ```
 skills/
+├── inngest-cloud/
 ├── inngest-setup/
 ├── inngest-durable-functions/
 ├── inngest-steps/
